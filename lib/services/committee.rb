@@ -16,5 +16,10 @@ module GGAServices
 			message = { type: type, session_id: session_id }
 			@client.call(:get_committees_by_type_and_session, message: message)
 		end
+
+		def get_committee(session_id)
+			message = { committee_id: session_id }
+			@client.call(:get_committee, message: message)
+		end
 	end
 end
