@@ -38,4 +38,15 @@ describe GGAServices::Committee do
 			expect( committees.get_committee(75) ).to be_successful
 		end
 	end
+
+	describe "#get_committee_for_session" do
+		it "should return committee record for session" do
+			fixture = File.read('spec/fixtures/committees_get_committee_for_session.xml')
+			message = { session_id: 21, committee_id: 75 }
+			savon.expects(:get_committee_for_session).with(message: message).returns(fixture)
+
+			committees = GGAServices::Committee.new
+			expect( committees.get_committee_for_session(75, 21) ).to be_successful
+		end
+	end
 end
