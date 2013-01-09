@@ -27,4 +27,15 @@ describe GGAServices::Vote do
 			expect( votes.get_votes_for_legislation(33209) ).to be_successful
 		end
 	end
+
+	describe "#get_vote" do
+		it "should return member votes" do
+			fixture = File.read('spec/fixtures/votes_get_vote.xml')
+			message = { vote_id: 9411 }
+			savon.expects(:get_vote).with(message: message).returns(fixture)
+
+			votes = GGAServices::Vote.new
+			expect( votes.get_vote(9411) ).to be_successful
+		end
+	end
 end
