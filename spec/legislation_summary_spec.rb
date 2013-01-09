@@ -16,15 +16,4 @@ describe GGAServices::Legislation do
 			expect( legislation.get_legislation_for_session(21) ).to be_successful
 		end
 	end
-
-	describe "#get_legislation_detail" do
-		it "should return vote list" do
-			fixture = File.read('spec/fixtures/legislation_get_legislation_detail.xml')
-			message = { legislation_id: 33209 }
-			savon.expects(:get_legislation_detail).with(message: message).returns(fixture)
-
-			legislation = GGAServices::Legislation.new
-			expect( legislation.get_legislation_detail(33209) ).to be_successful
-		end
-	end
 end
