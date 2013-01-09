@@ -12,8 +12,8 @@ describe GGAServices::Legislation do
 			message = { session_id: 21 }
 			savon.expects(:get_legislation_for_session).with(message: message).returns(fixture)
 
-			votes = GGAServices::Legislation.new
-			expect( votes.get_legislation_for_session(21) ).to be_successful
+			legislation = GGAServices::Legislation.new
+			expect( legislation.get_legislation_for_session(21) ).to be_successful
 		end
 	end
 
@@ -23,8 +23,8 @@ describe GGAServices::Legislation do
 			message = { legislation_id: 33209 }
 			savon.expects(:get_legislation_detail).with(message: message).returns(fixture)
 
-			votes = GGAServices::Legislation.new
-			expect( votes.get_legislation_detail(33209) ).to be_successful
+			legislation = GGAServices::Legislation.new
+			expect( legislation.get_legislation_detail(33209) ).to be_successful
 		end
 	end
 end
