@@ -7,7 +7,6 @@ module GGAServices
 				wsdl: 'http://webservices.legis.ga.gov/GGAServices/Votes/Service.svc?wsdl',
 				convert_request_keys_to: :camelcase
 			)
-			@response = nil
 		end
 
 		def method_missing(m, message)
