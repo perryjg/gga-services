@@ -8,9 +8,8 @@ module GGAServices
 			)
 		end
 
-		def get_legislation_for_session(session_id)
-			message = { session_id: session_id }
-			@summary_response = @client.call(:get_legislation_for_session, message: message)
+		def method_missing(m, message)
+			@response = @client.call(m.to_sym, message: message)
 		end
 	end
 end
