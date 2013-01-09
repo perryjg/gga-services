@@ -14,5 +14,10 @@ module GGAServices
 			message = { branch: branch, session_id: session_id }
 			@response = @client.call(:get_votes, message: message)
 		end
+
+		def get_votes_for_legislation(legislation_id)
+			message = { legislation_id: legislation_id }
+			@response = @client.call(:get_votes_for_legislation, message: message)
+		end
 	end
 end
