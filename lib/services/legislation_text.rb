@@ -8,9 +8,8 @@ module GGAServices
 			)
 		end
 
-		def get_legislation_text(legislation_text_id)
-			message = { legislation_text_id: legislation_text_id }
-			@summary_response = @client.call(:get_legislation_text, message: message)
+		def method_missing(m, message)
+			@summary_response = @client.call(m.to_sym, message: message)
 		end
 	end
 end

@@ -13,7 +13,7 @@ describe GGAServices::Member do
 			savon.expects(:get_members_by_session).with(message: message).returns(fixture)
 
 			members = GGAServices::Member.new
-			expect( members.get_members_by_session(22) ).to be_successful
+			expect( members.get_members_by_session(message) ).to be_successful
 		end
 	end
 
@@ -24,7 +24,7 @@ describe GGAServices::Member do
 			savon.expects(:get_members_by_type_and_session).with(message: message).returns(fixture)
 
 			members = GGAServices::Member.new
-			expect( members.get_members_by_type_and_session('Senator', 22) ).to be_successful
+			expect( members.get_members_by_type_and_session(message) ).to be_successful
 		end
 	end
 
@@ -35,7 +35,7 @@ describe GGAServices::Member do
 			savon.expects(:get_member).with(message: message).returns(fixture)
 
 			members = GGAServices::Member.new
-			expect( members.get_member(165) ).to be_successful
+			expect( members.get_member(message) ).to be_successful
 		end
 	end
 end

@@ -13,7 +13,7 @@ describe GGAServices::LegislationText do
 			savon.expects(:get_legislation_text).with(message: message).returns(fixture)
 
 			legislation_text = GGAServices::LegislationText.new
-			expect( legislation_text.get_legislation_text(127646) ).to be_successful
+			expect( legislation_text.get_legislation_text(message) ).to be_successful
 		end
 	end
 end

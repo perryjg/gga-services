@@ -13,7 +13,7 @@ describe GGAServices::Committee do
 			savon.expects(:get_committees_by_session).with(message: message).returns(fixture)
 
 			committees = GGAServices::Committee.new
-			expect( committees.get_committees_by_session(22) ).to be_successful
+			expect( committees.get_committees_by_session(message) ).to be_successful
 		end
 	end
 
@@ -24,7 +24,7 @@ describe GGAServices::Committee do
 			savon.expects(:get_committees_by_type_and_session).with(message: message).returns(fixture)
 
 			committees = GGAServices::Committee.new
-			expect( committees.get_committees_by_type_and_session('House', 22) ).to be_successful
+			expect( committees.get_committees_by_type_and_session(message) ).to be_successful
 		end
 	end
 
@@ -35,7 +35,7 @@ describe GGAServices::Committee do
 			savon.expects(:get_committee).with(message: message).returns(fixture)
 
 			committees = GGAServices::Committee.new
-			expect( committees.get_committee(75) ).to be_successful
+			expect( committees.get_committee(message) ).to be_successful
 		end
 	end
 
@@ -46,7 +46,7 @@ describe GGAServices::Committee do
 			savon.expects(:get_committee_for_session).with(message: message).returns(fixture)
 
 			committees = GGAServices::Committee.new
-			expect( committees.get_committee_for_session(75, 21) ).to be_successful
+			expect( committees.get_committee_for_session(message) ).to be_successful
 		end
 	end
 end

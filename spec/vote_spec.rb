@@ -13,7 +13,7 @@ describe GGAServices::Vote do
 			savon.expects(:get_votes).with(message: message).returns(fixture)
 
 			votes = GGAServices::Vote.new
-			expect( votes.get_votes('House', 21) ).to be_successful
+			expect( votes.get_votes(message) ).to be_successful
 		end
 	end
 
@@ -24,7 +24,7 @@ describe GGAServices::Vote do
 			savon.expects(:get_votes_for_legislation).with(message: message).returns(fixture)
 
 			votes = GGAServices::Vote.new
-			expect( votes.get_votes_for_legislation(33209) ).to be_successful
+			expect( votes.get_votes_for_legislation(message) ).to be_successful
 		end
 	end
 
@@ -35,7 +35,7 @@ describe GGAServices::Vote do
 			savon.expects(:get_vote).with(message: message).returns(fixture)
 
 			votes = GGAServices::Vote.new
-			expect( votes.get_vote(9411) ).to be_successful
+			expect( votes.get_vote(message) ).to be_successful
 		end
 	end
 end

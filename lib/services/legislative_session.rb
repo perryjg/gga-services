@@ -8,16 +8,8 @@ module GGAServices
 			)
 		end
 
-		def get_sessions
-			@response = @client.call(:get_sessions)
-		end
-
-		def get_years
-			@response = @client.call(:get_years)
-		end
-
-		def get_session_schedule
-			@response = @client.call(:get_session_schedule)
+		def method_missing(m)
+			@response = @client.call(m.to_sym)
 		end
 	end
 end

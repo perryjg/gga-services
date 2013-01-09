@@ -8,19 +8,8 @@ module GGAServices
 			)
 		end
 
-		def get_members_by_session(session_id)
-			message = { session_id: session_id }
-			@reponse = @client.call(:get_members_by_session, message: message)
-		end
-
-		def get_members_by_type_and_session(type, session_id)
-			message = { type: type, session_id: session_id }
-			@reponse = @client.call(:get_members_by_type_and_session, message: message)
-		end
-
-		def get_member(member_id)
-			message = { member_id: member_id }
-			@reponse = @client.call(:get_member, message: message)
+		def method_missing(m, message)
+			@reponse = @client.call(m.to_sym, message: message)
 		end
 	end
 end
