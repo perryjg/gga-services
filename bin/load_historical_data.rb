@@ -4,10 +4,10 @@ require_relative '../lib/gga_services'
 
 include GGAServices
 
-connect_string = 'DBI:Mysql:gga_services:XXXX'
+connect_string = 'DBI:Mysql:gga_services:ajc-intranet.cgmwsizvte0i.us-east-1.rds.amazonaws.com'
 @dbh = DBI.connect( connect_string,
-                    "XXXX",
-                    "XXXX" )
+                    "ajcnews",
+                    "KbZ776Pd" )
 sql_format = 'INSERT IGNORE INTO sessions VALUES("%s","%s","%s","%s"")'
 
 sessions_service = LegislativeSession.new

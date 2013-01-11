@@ -1,6 +1,7 @@
 module GGAServices
 	class Legislation
 		attr_accessor :response
+
 		def initialize
 			@client = Savon.client(
 				wsdl: 'http://webservices.legis.ga.gov/GGAServices/Legislation/Service.svc?wsdl',
