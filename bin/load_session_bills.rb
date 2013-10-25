@@ -23,8 +23,8 @@ class Sponsorship < ActiveRecord::Base
   self.primary_key = "id"
 end
 
-class Committee < ActiveRecord::Base
-end
+# class Committee < ActiveRecord::Base
+# end
 
 class BillsCommittee < ActiveRecord::Base
 end
@@ -44,7 +44,7 @@ class Vote < ActiveRecord::Base
 end
 
 #sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [23]
+sessions = [1]
 house = {
   "HB" => "house",
   "HR" => "house",
@@ -55,17 +55,25 @@ house = {
 bill_service = GGAServices::Legislation.new
 sessions.each do |session|
   bill_index = bill_service.get_legislation_for_session({session_id: session}).body[:get_legislation_for_session_response][:get_legislation_for_session_result][:legislation_index]
-
   bill_index.each do |bill|
     bill['session_id'] = session
     p bill
     BillIndex.find_or_create_by(id: bill[:id]).update(bill)
 
     bill_detail = bill_service.get_legislation_detail({legislation_id: bill[:id]}).body[:get_legislation_detail_response][:get_legislation_detail_result]
+    
+    puts ""
+    puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    p bill_detail
+    puts "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+    puts ""
+
 
     #pull out child records -- convert to array if just one record
     authors = bill_detail.delete(:authors)
-    authors[:sponsorship] = [authors[:sponsorship]] if authors[:sponsorship].kind_of?(Hash)
+    if authors
+      authors[:sponsorship] = [authors[:sponsorship]] if authors[:sponsorship].kind_of?(Hash)
+    end
 
     committees = bill_detail.delete(:committees)
     if committees
@@ -85,6 +93,8 @@ sessions.each do |session|
 
     #flatten hash where necessary
     bill_detail[:latest_version_id] = bill_detail[:latest_version][:id]
+    bill_detail[:latest_version_description] = bill_detail[:latest_version][:description]
+    bill_detail[:latest_version_url] = bill_detail[:latest_version][:url]
     bill_detail.delete(:latest_version)
 
     bill_detail[:session_id] = bill_detail[:session][:id]
@@ -93,6 +103,7 @@ sessions.each do |session|
     if bill_detail[:status]
       bill_detail[:status_id] = bill_detail[:status][:id]
       bill_detail[:status_date] = bill_detail[:status][:date].to_datetime.to_s
+      bill_detail[:status_description] = bill_detail[:status][:description]
     end
     bill_detail.delete(:status)
 
@@ -109,28 +120,33 @@ sessions.each do |session|
     #Load data
     Bill.find_or_create_by(id: bill_detail[:id]).update(bill_detail)
 
-    authors[:sponsorship].each do |s|
-      s[:sponsorship_type] = s.delete(:type);
-      s[:bill_id] = bill_detail[:id]
-      Sponsorship.find_or_create_by(id: s[:id]).update(s)
-    end
-
-    if committees
-      committees[:committee_listing].each do |c|
-        c[:committee_type] = c.delete(:type)
-        Committee.find_or_create_by(id: c[:id]).update(c)
-
-        c[:committee_id] = c.delete(:id)
-        c[:bill_id] = bill_detail[:id]
-        BillsCommittee.find_or_create_by(bill_id: bill_detail[:id], committee_type: c[:committee_type]).update(c)
+    if authors
+      authors[:sponsorship].each do |s|
+        s[:sponsorship_type] = s.delete(:type);
+        s[:bill_id] = bill_detail[:id]
+        Sponsorship.find_or_create_by(id: s[:id]).update(s)
       end
     end
+
+    # if committees
+    #   committees[:committee_listing].each do |c|
+    #     c[:committee_type] = c.delete(:type)
+    #     Committee.find_or_create_by(id: c[:id]).update(c)
+
+    #     c[:committee_id] = c.delete(:id)
+    #     c[:bill_id] = bill_detail[:id]
+    #     BillsCommittee.find_or_create_by(bill_id: bill_detail[:id], committee_type: c[:committee_type]).update(c)
+    #   end
+    # end
 
     if statusHistory
       statusHistory[:status_listing].each do |status|
         status[:status_id] = status.delete(:id)
         status[:bill_id] = bill_detail[:id]
         status[:status_date] = status[:date].to_datetime.to_s
+        status[:document_type] = bill_detail[:document_type]
+        status[:number] = bill_detail[:number]
+        status[:caption] = bill_detail[:caption]
         status.delete(:date)
         BillStatusListing.find_or_create_by(bill_id: status[:bill_id], code: status[:code]).update(status)
 
@@ -149,8 +165,9 @@ sessions.each do |session|
         v[:id] = v.delete(:vote_id)
         v[:bill_id] = bill_detail[:id]
         v[:vote_date] = v[:date].to_datetime.to_s
-        v.delete(:date)
         v[:session_id] = v[:session][:id]
+        v[:title] = bill_detail[:caption]
+        v.delete(:date)
         v.delete(:session)
         v.delete(:day)
         v.delete(:time)
