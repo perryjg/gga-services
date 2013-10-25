@@ -13,7 +13,7 @@
 		:id=>"37718"
 	}, {
 		:caption=>"State government; pari-mutuel wagering on horse racing; provide",
-		:description=>"HB 4", 
+		:description=>"HB 4",
 		:id=>"37719"
 	}, {
 		:caption=>"Forest Park, City of; councilmember votes for calling special meeting; change number",
@@ -21,7 +21,7 @@
 		:id=>"37721"
 	}, {
 		:caption=>"Piedmont Altamaha Transit Authority Act; enact",
-		:description=>"HB 6", 
+		:description=>"HB 6",
 		:id=>"37722"
 	}, {
 		:caption=>"Penal institutions; use of restraints on pregnant female inmates under certain circumstances; prohibit",
