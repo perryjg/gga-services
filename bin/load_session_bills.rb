@@ -44,7 +44,7 @@ class Vote < ActiveRecord::Base
 end
 
 #sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [1]
+sessions = [23]
 house = {
   "HB" => "house",
   "HR" => "house",
@@ -54,14 +54,18 @@ house = {
 
 bill_service = GGAServices::Legislation.new
 sessions.each do |session|
-  bill_index = bill_service.get_legislation_for_session({session_id: session}).body[:get_legislation_for_session_response][:get_legislation_for_session_result][:legislation_index]
+  bill_index = bill_service.get_legislation_for_session(session)
   bill_index.each do |bill|
     bill['session_id'] = session
-    p bill
+    puts ""
+    puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    puts bill[:id]
+    puts "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+    puts ""
     BillIndex.find_or_create_by(id: bill[:id]).update(bill)
 
-    bill_detail = bill_service.get_legislation_detail({legislation_id: bill[:id]}).body[:get_legislation_detail_response][:get_legislation_detail_result]
-    
+    bill_detail = bill_service.get_legislation_detail( bill[:id] )
+
     puts ""
     puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     p bill_detail
@@ -71,25 +75,10 @@ sessions.each do |session|
 
     #pull out child records -- convert to array if just one record
     authors = bill_detail.delete(:authors)
-    if authors
-      authors[:sponsorship] = [authors[:sponsorship]] if authors[:sponsorship].kind_of?(Hash)
-    end
-
     committees = bill_detail.delete(:committees)
-    if committees
-      committees[:committee_listing] = [committees[:committee_listing]] if committees[:committee_listing].kind_of?(Hash)
-    end
-
     statusHistory = bill_detail.delete(:status_history)
-    statusHistory[:status_listing] = [statusHistory[:status_listing]] if statusHistory[:status_listing].kind_of?(Hash)
-
     versions = bill_detail.delete(:versions)
-    versions[:document_description] = [versions[:document_description]] if versions[:document_description].kind_of?(Hash)
-
     votes = bill_detail.delete(:votes)
-    if votes
-      votes[:vote_listing] = [votes[:vote_listing]] if votes[:vote_listing].kind_of?(Hash)
-    end
 
     #flatten hash where necessary
     bill_detail[:latest_version_id] = bill_detail[:latest_version][:id]
@@ -110,12 +99,13 @@ sessions.each do |session|
     if bill_detail[:sponsor]
       bill_detail["#{bill_detail[:sponsor][:type].underscore}_id".to_sym] = bill_detail[:sponsor][:id]
       bill_detail["#{house[bill_detail[:document_type]]}_sponsor_id".to_sym] = authors[:sponsorship].select {|s| s[:sequence] == "1"}[0][:id]
+      bill_detail[:member_id] = authors[:sponsorship].select {|s| s[:sequence] == "1"}[0][:id]
     end
     bill_detail.delete(:sponsor)
 
     #delete the crap at the end
-    bill_detail.delete(:"@xmlns:a")
-    bill_detail.delete(:"@xmlns:i")
+    # bill_detail.delete(:"@xmlns:a")
+    # bill_detail.delete(:"@xmlns:i")
 
     #Load data
     Bill.find_or_create_by(id: bill_detail[:id]).update(bill_detail)
@@ -176,6 +166,6 @@ sessions.each do |session|
       end
     end
   end
-  sleep(3)
+  sleep(2)
 end
 
