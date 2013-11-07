@@ -44,7 +44,7 @@ class Vote < ActiveRecord::Base
 end
 
 #sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [23]
+sessions = [22,21,20,18,15,14,13,11,7,6,1]
 house = {
   "HB" => "house",
   "HR" => "house",

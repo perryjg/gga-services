@@ -22,27 +22,29 @@ end
 
 member_service = GGAServices::Member.new
 # sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [23]
+sessions = [22,21,20,18,15,14,13,11,7,6,1]
 
 sessions.each do |session|
   members = member_service.get_members_by_session(session)
 
   members.each do |member|
-    puts "MEMBER ID: #{member[:id]}"
+    puts ">>>>>>>>>MEMBER ID: #{member[:id]}"
     member_detail = member_service.get_member(member[:id])
-
-    address = member_detail.delete(:address)
-    address.keys.each do |key|
-      member_detail["address_#{key}".to_sym] = address[key]
-    end
 
     name = member_detail.delete(:name)
     name.keys.each do |key|
       member_detail["name_#{key}".to_sym] = name[key]
     end
 
+    address = member_detail.delete(:address)
+    address.keys.each do |key|
+      # puts "#{address[key]}: #{address[key].class}"
+      member_detail["address_#{key}".to_sym] = address[key]
+    end
+
     district_address = member_detail.delete(:district_address)
     district_address.keys.each do |key|
+      # puts "#{district_address[key]}: #{district_address[key].class}"
       member_detail["district_address_#{key}".to_sym] = district_address[key]
     end
 
@@ -60,8 +62,8 @@ sessions.each do |session|
       service[:post] = district[:post]
       service[:district_type] = district[:type]
       service[:district_number] = district[:number]
-      service[:title] = district[:title]
 
+      service.delete(:committee_memberships)
       LegislativeService.find_or_create_by(id: service[:id]).update(service)
     end
 
@@ -70,5 +72,7 @@ sessions.each do |session|
     member_detail.delete(:legislative_comments)
     member_detail.delete(:staff)
     Member.find_or_create_by(id: member_detail[:id]).update(member_detail)
+
+    sleep(1)
   end
 end
