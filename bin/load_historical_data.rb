@@ -1,3 +1,5 @@
+# Old version of the script -- DO NOT USE
+
 require 'rubygems'
 require 'dbi'
 require_relative '../lib/gga_services'
@@ -6,8 +8,8 @@ include GGAServices
 
 #connect_string = 'DBI:Mysql:gga_services:ajc-intranet.cgmwsizvte0i.us-east-1.rds.amazonaws.com'
 # @dbh = DBI.connect( connect_string,
-#                     "ajcnews",
-#                     "KbZ776Pd"
+#                     "john",
+#                     "schuster"
 # )
 connect_string = 'DBI:Mysql:gga:localhost'
 @dbh = DBI.connect( connect_string,

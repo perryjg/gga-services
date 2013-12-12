@@ -44,7 +44,7 @@ class Vote < ActiveRecord::Base
 end
 
 #sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [22,21,20,18,15,14,13,11,7,6,1]
+sessions = [23]
 house = {
   "HB" => "house",
   "HR" => "house",
@@ -59,7 +59,7 @@ sessions.each do |session|
     bill['session_id'] = session
     puts ""
     puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    puts bill[:id]
+    puts "#{session}: #{bill[:id]}"
     puts "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
     puts ""
     BillIndex.find_or_create_by(id: bill[:id]).update(bill)
