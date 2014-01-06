@@ -2,14 +2,19 @@ require 'rubygems'
 require 'active_record'
 require 'active_support/core_ext'
 require 'mysql2'
+require 'logger'
 require_relative '../lib/gga_services'
+
+LOG = Logger.new('logs/log.txt', 'weekly')
+LOG.level = Logger::INFO
+LOG.info('START')
 
 ActiveRecord::Base.establish_connection(
   adapter: "mysql2",
-  host: "localhost",
-  username: "john",
-  password: "schuster",
-  database: "gga"
+  host: ENV["GGA_HOST"],
+  username: ENV["GGA_USER"],
+  password: ENV["GGA_PASSWORD"],
+  database: ENV["GGA_DATABASE"]
 )
 
 class BillIndex < ActiveRecord::Base
@@ -43,7 +48,7 @@ end
 class Vote < ActiveRecord::Base
 end
 
-#sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
+# sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
 sessions = [23]
 house = {
   "HB" => "house",
@@ -54,23 +59,38 @@ house = {
 
 bill_service = GGAServices::Legislation.new
 sessions.each do |session|
-  bill_index = bill_service.get_legislation_for_session(session)
+  begin
+    bill_index = bill_service.get_legislation_for_session(session)
+  rescue => error
+    LOG.fatal error
+    fail
+  end
+
   bill_index.each do |bill|
+    next if bill[:id] == '5080'
     bill['session_id'] = session
-    puts ""
-    puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    puts "#{session}: #{bill[:id]}"
-    puts "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-    puts ""
-    BillIndex.find_or_create_by(id: bill[:id]).update(bill)
+    # puts ""
+    # puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    # puts "#{session}: #{bill[:id]}"
+    # puts "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+    # puts ""
+    begin
+      BillIndex.find_or_create_by(id: bill[:id]).update(bill)
+    rescue => error
+      LOG.error error
+    end
 
-    bill_detail = bill_service.get_legislation_detail( bill[:id] )
+    begin
+      bill_detail = bill_service.get_legislation_detail( bill[:id] )
+    rescue => error
+      LOG.error( "#{error} (Bill ID: #{bill[:id]})" )
+    end
 
-    puts ""
-    puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    p bill_detail
-    puts "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-    puts ""
+    # puts ""
+    # puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    # p bill_detail
+    # puts "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+    # puts ""
 
 
     #pull out child records -- convert to array if just one record
@@ -108,7 +128,11 @@ sessions.each do |session|
     # bill_detail.delete(:"@xmlns:i")
 
     #Load data
-    Bill.find_or_create_by(id: bill_detail[:id]).update(bill_detail)
+    begin
+      Bill.find_or_create_by(id: bill_detail[:id]).update(bill_detail)
+    rescue => error
+      LOG.error( "#{error} (Bill ID: #{bill[:id]}" )
+    end
 
     if authors
       authors[:sponsorship].each do |s|
@@ -138,16 +162,31 @@ sessions.each do |session|
         status[:number] = bill_detail[:number]
         status[:caption] = bill_detail[:caption]
         status.delete(:date)
-        BillStatusListing.find_or_create_by(bill_id: status[:bill_id], code: status[:code]).update(status)
+
+        begin
+          BillStatusListing.find_or_create_by(bill_id: status[:bill_id], code: status[:code]).update(status)
+        rescue => error
+          LOG.error error
+        end
 
         status[:id] = status[:status_id]
-        Status.find_or_create_by(id: status[:id]).update(status.slice(:id, :code, :description))
+
+        begin
+          Status.find_or_create_by(id: status[:id]).update(status.slice(:id, :code, :description))
+        rescue => error
+          LOG.error error
+        end
       end
     end
 
     versions[:document_description].each do |v|
       v[:bill_id] = v.delete(:legislation_id)
-      Version.find_or_create_by(id: v[:id]).update(v)
+
+      begin
+        Version.find_or_create_by(id: v[:id]).update(v)
+      rescue => error
+        LOG.error error
+      end
     end
 
     if votes
@@ -162,10 +201,15 @@ sessions.each do |session|
         v.delete(:day)
         v.delete(:time)
 
-        Vote.find_or_create_by(id: v[:id]).update(v)
+        begin
+          Vote.find_or_create_by(id: v[:id]).update(v)
+        rescue => error
+          LOG.error error
+        end
       end
     end
   end
   sleep(2)
 end
 
+LOG.info('STOP')

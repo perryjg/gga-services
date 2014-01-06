@@ -18,9 +18,6 @@ module GGAServices
 			@response = @client.call(:get_legislation_detail, message: { legislation_id: legislation_id })
 			data = response.body[:get_legislation_detail_response][:get_legislation_detail_result]
 			return munge_detail_response(data)
-
-		rescue Savon::Error => error
-			return error
 		end
 
 		# def get_legislation_detail_by_description( document_type, number, session_id )
