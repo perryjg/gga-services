@@ -5,7 +5,7 @@ require 'mysql2'
 require 'logger'
 require_relative '../lib/gga_services'
 
-LOG = Logger.new('logs/log.txt', 'weekly')
+LOG = Logger.new('~/logs/bills_log.txt', 'weekly')
 LOG.level = Logger::INFO
 LOG.info('START')
 
@@ -69,6 +69,7 @@ sessions.each do |session|
   bill_index.each do |bill|
     next if bill[:id] == '5080'
     bill['session_id'] = session
+
     # puts ""
     # puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     # puts "#{session}: #{bill[:id]}"
@@ -88,128 +89,150 @@ sessions.each do |session|
 
     # puts ""
     # puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    # p bill_detail
+    # puts bill_detail[:status][:date].to_date
+    # puts bill_detail[:status][:date].to_date == 1.day.ago.to_date
     # puts "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
     # puts ""
 
+    if bill_detail[:status][:date].to_date >= 7.days.ago.to_date
+      LOG.info("Updating Bill ID #{bill[:id]}")
 
-    #pull out child records -- convert to array if just one record
-    authors = bill_detail.delete(:authors)
-    committees = bill_detail.delete(:committees)
-    statusHistory = bill_detail.delete(:status_history)
-    versions = bill_detail.delete(:versions)
-    votes = bill_detail.delete(:votes)
+      #pull out child records -- convert to array if just one record
+      authors = bill_detail.delete(:authors)
+      committees = bill_detail.delete(:committees)
+      statusHistory = bill_detail.delete(:status_history)
+      versions = bill_detail.delete(:versions)
+      votes = bill_detail.delete(:votes)
 
-    #flatten hash where necessary
-    bill_detail[:latest_version_id] = bill_detail[:latest_version][:id]
-    bill_detail[:latest_version_description] = bill_detail[:latest_version][:description]
-    bill_detail[:latest_version_url] = bill_detail[:latest_version][:url]
-    bill_detail.delete(:latest_version)
+      #flatten hash where necessary
+      bill_detail[:latest_version_id] = bill_detail[:latest_version][:id]
+      bill_detail[:latest_version_description] = bill_detail[:latest_version][:description]
+      bill_detail[:latest_version_url] = bill_detail[:latest_version][:url]
+      bill_detail.delete(:latest_version)
 
-    bill_detail[:session_id] = bill_detail[:session][:id]
-    bill_detail.delete(:session)
+      bill_detail[:session_id] = bill_detail[:session][:id]
+      bill_detail.delete(:session)
 
-    if bill_detail[:status]
-      bill_detail[:status_id] = bill_detail[:status][:id]
-      bill_detail[:status_date] = bill_detail[:status][:date].to_datetime.to_s
-      bill_detail[:status_description] = bill_detail[:status][:description]
-    end
-    bill_detail.delete(:status)
-
-    if bill_detail[:sponsor]
-      bill_detail["#{bill_detail[:sponsor][:type].underscore}_id".to_sym] = bill_detail[:sponsor][:id]
-      bill_detail["#{house[bill_detail[:document_type]]}_sponsor_id".to_sym] = authors[:sponsorship].select {|s| s[:sequence] == "1"}[0][:id]
-      bill_detail[:member_id] = authors[:sponsorship].select {|s| s[:sequence] == "1"}[0][:id]
-    end
-    bill_detail.delete(:sponsor)
-
-    #delete the crap at the end
-    # bill_detail.delete(:"@xmlns:a")
-    # bill_detail.delete(:"@xmlns:i")
-
-    #Load data
-    begin
-      Bill.find_or_create_by(id: bill_detail[:id]).update(bill_detail)
-    rescue => error
-      LOG.error( "#{error} (Bill ID: #{bill[:id]}" )
-    end
-
-    if authors
-      authors[:sponsorship].each do |s|
-        s[:sponsorship_type] = s.delete(:type);
-        s[:bill_id] = bill_detail[:id]
-        Sponsorship.find_or_create_by(id: s[:id]).update(s)
+      if bill_detail[:status]
+        bill_detail[:status_id] = bill_detail[:status][:id]
+        bill_detail[:status_date] = bill_detail[:status][:date].to_datetime.to_s
+        bill_detail[:status_description] = bill_detail[:status][:description]
       end
-    end
+      bill_detail.delete(:status)
 
-    # if committees
-    #   committees[:committee_listing].each do |c|
-    #     c[:committee_type] = c.delete(:type)
-    #     Committee.find_or_create_by(id: c[:id]).update(c)
-
-    #     c[:committee_id] = c.delete(:id)
-    #     c[:bill_id] = bill_detail[:id]
-    #     BillsCommittee.find_or_create_by(bill_id: bill_detail[:id], committee_type: c[:committee_type]).update(c)
-    #   end
-    # end
-
-    if statusHistory
-      statusHistory[:status_listing].each do |status|
-        status[:status_id] = status.delete(:id)
-        status[:bill_id] = bill_detail[:id]
-        status[:status_date] = status[:date].to_datetime.to_s
-        status[:document_type] = bill_detail[:document_type]
-        status[:number] = bill_detail[:number]
-        status[:caption] = bill_detail[:caption]
-        status.delete(:date)
-
-        begin
-          BillStatusListing.find_or_create_by(bill_id: status[:bill_id], code: status[:code]).update(status)
-        rescue => error
-          LOG.error error
-        end
-
-        status[:id] = status[:status_id]
-
-        begin
-          Status.find_or_create_by(id: status[:id]).update(status.slice(:id, :code, :description))
-        rescue => error
-          LOG.error error
-        end
+      if bill_detail[:sponsor]
+        bill_detail["#{bill_detail[:sponsor][:type].underscore}_id".to_sym] = bill_detail[:sponsor][:id]
+        bill_detail["#{house[bill_detail[:document_type]]}_sponsor_id".to_sym] = authors[:sponsorship].select {|s| s[:sequence] == "1"}[0][:id]
+        bill_detail[:member_id] = authors[:sponsorship].select {|s| s[:sequence] == "1"}[0][:id]
       end
-    end
+      bill_detail.delete(:sponsor)
 
-    versions[:document_description].each do |v|
-      v[:bill_id] = v.delete(:legislation_id)
+      #delete the crap at the end
+      # bill_detail.delete(:"@xmlns:a")
+      # bill_detail.delete(:"@xmlns:i")
 
+      #Load data
       begin
-        Version.find_or_create_by(id: v[:id]).update(v)
+        Bill.find_or_create_by(id: bill_detail[:id]).update(bill_detail)
       rescue => error
-        LOG.error error
+        LOG.error( "#{error} (Bill ID: #{bill[:id]}" )
       end
-    end
 
-    if votes
-      votes[:vote_listing].each do |v|
-        v[:id] = v.delete(:vote_id)
-        v[:bill_id] = bill_detail[:id]
-        v[:vote_date] = v[:date].to_datetime.to_s
-        v[:session_id] = v[:session][:id]
-        v[:title] = bill_detail[:caption]
-        v.delete(:date)
-        v.delete(:session)
-        v.delete(:day)
-        v.delete(:time)
+      if authors
+        authors[:sponsorship].each do |s|
+          s[:sponsorship_type] = s.delete(:type);
+          s[:bill_id] = bill_detail[:id]
+          Sponsorship.find_or_create_by(id: s[:id]).update(s)
+        end
+      end
+
+      # if committees
+      #   committees[:committee_listing].each do |c|
+      #     c[:committee_type] = c.delete(:type)
+      #     Committee.find_or_create_by(id: c[:id]).update(c)
+
+      #     c[:committee_id] = c.delete(:id)
+      #     c[:bill_id] = bill_detail[:id]
+      #     BillsCommittee.find_or_create_by(bill_id: bill_detail[:id], committee_type: c[:committee_type]).update(c)
+      #   end
+      # end
+
+      if statusHistory
+        statusHistory[:status_listing].each do |status|
+          status[:status_id] = status.delete(:id)
+          status[:bill_id] = bill_detail[:id]
+          status[:status_date] = status[:date].to_datetime.to_s
+          status[:document_type] = bill_detail[:document_type]
+          status[:number] = bill_detail[:number]
+          status[:caption] = bill_detail[:caption]
+          status.delete(:date)
+
+          begin
+            BillStatusListing.find_or_create_by(bill_id: status[:bill_id], code: status[:code]).update(status)
+          rescue => error
+            LOG.error error
+          end
+
+          status[:id] = status[:status_id]
+
+          begin
+            Status.find_or_create_by(id: status[:id]).update(status.slice(:id, :code, :description))
+          rescue => error
+            LOG.error error
+          end
+        end
+      end
+
+      versions[:document_description].each do |v|
+        v[:bill_id] = v.delete(:legislation_id)
 
         begin
-          Vote.find_or_create_by(id: v[:id]).update(v)
+          Version.find_or_create_by(id: v[:id]).update(v)
         rescue => error
           LOG.error error
+        end
+      end
+
+      if votes
+        votes[:vote_listing].each do |v|
+          v[:id] = v.delete(:vote_id)
+          v[:bill_id] = bill_detail[:id]
+          v[:vote_date] = v[:date].to_datetime.to_s
+          v[:session_id] = v[:session][:id]
+          v[:title] = bill_detail[:caption]
+          v.delete(:date)
+          v.delete(:session)
+          v.delete(:day)
+          v.delete(:time)
+
+          begin
+            Vote.find_or_create_by(id: v[:id]).update(v)
+          rescue => error
+            LOG.error error
+          end
         end
       end
     end
   end
-  sleep(2)
+  sleep(1)
+end
+
+begin
+  ActiveRecord.connection.execute('call gga.reload_bills()')
+rescue => error
+  LOG.error error
+end
+
+begin
+  ActiveRecord.connection.execute('call gga.reload_bill_status_listings()')
+rescue => error
+  LOG.error error
+end
+
+begin
+  ActiveRecord.connection.execute('call gga.reload_versions()')
+rescue => error
+  LOG.error error
 end
 
 LOG.info('STOP')
