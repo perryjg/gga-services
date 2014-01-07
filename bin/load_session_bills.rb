@@ -94,7 +94,7 @@ sessions.each do |session|
     # puts "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
     # puts ""
 
-    if bill_detail[:status][:date].to_date >= 7.days.ago.to_date
+    # if bill_detail[:status][:date].to_date >= 7.days.ago.to_date
       LOG.info("Updating Bill ID #{bill[:id]}")
 
       #pull out child records -- convert to array if just one record
@@ -211,26 +211,26 @@ sessions.each do |session|
             LOG.error error
           end
         end
-      end
+      # end
     end
   end
   sleep(1)
 end
 
 begin
-  ActiveRecord.connection.execute('call gga.reload_bills()')
+  ActiveRecord::Base.connection.execute('call gga.reload_bills()')
 rescue => error
   LOG.error error
 end
 
 begin
-  ActiveRecord.connection.execute('call gga.reload_bill_status_listings()')
+  ActiveRecord::Base.connection.execute('call gga.reload_bill_status_listings()')
 rescue => error
   LOG.error error
 end
 
 begin
-  ActiveRecord.connection.execute('call gga.reload_versions()')
+  ActiveRecord::Base.connection.execute('call gga.reload_versions()')
 rescue => error
   LOG.error error
 end
