@@ -5,7 +5,7 @@ require 'mysql2'
 require 'logger'
 require_relative '../lib/gga_services'
 
-LOG = Logger.new('~/logs/bills_log.txt', 'weekly')
+LOG = Logger.new('logs/bills_log.txt', 'weekly')
 LOG.level = Logger::INFO
 LOG.info('START')
 
