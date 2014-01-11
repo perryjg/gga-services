@@ -95,7 +95,7 @@ sessions.each do |session|
     # puts ""
 
     # if bill_detail[:status][:date].to_date >= 7.days.ago.to_date
-      LOG.info("Updating Bill ID #{bill[:id]}")
+      LOG.debug("Updating Bill ID #{bill[:id]}")
 
       #pull out child records -- convert to array if just one record
       authors = bill_detail.delete(:authors)
@@ -214,7 +214,7 @@ sessions.each do |session|
       # end
     end
   end
-  sleep(1)
+  sleep(2)
 end
 
 begin
