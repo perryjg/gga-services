@@ -56,6 +56,13 @@ if votes.length > 0
       MemberVote.create(member_vote)
     end
   end
+
+  begin
+    ActiveRecord::Base.connection.execute('call gga.reload_votes')
+  rescue => error
+    LOG.error error
+  end
+  LOG.info("Vote data successfully reloaded")
 else
   LOG.info("No new votes found")
 end
