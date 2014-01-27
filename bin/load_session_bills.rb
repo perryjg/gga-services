@@ -222,20 +222,27 @@ begin
 rescue => error
   LOG.error error
 end
-LOG.info("bills table successfully reloadsd")
+LOG.info("bills table successfully reloaded")
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_bill_status_listings()')
 rescue => error
   LOG.error error
 end
-LOG.info("bill_status_listings table successfully reloadsd")
+LOG.info("bill_status_listings table successfully reloaded")
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_versions()')
 rescue => error
   LOG.error error
 end
-LOG.info("versions table successfully reloadsd")
+LOG.info("versions table successfully reloaded")
+
+begin
+  ActiveRecord::Base.connection.execute('call gga.reload_sponsorships()')
+rescue => error
+  LOG.error error
+end
+LOG.info("sponsorships table successfully reloaded")
 
 LOG.info('STOP')
