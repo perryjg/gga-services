@@ -228,21 +228,24 @@ begin
   ActiveRecord::Base.connection.execute('call gga.reload_bill_status_listings()')
 rescue => error
   LOG.error error
+else
+  LOG.info("bill_status_listings table successfully reloaded")
 end
-LOG.info("bill_status_listings table successfully reloaded")
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_versions()')
 rescue => error
   LOG.error error
+else
+  LOG.info("versions table successfully reloaded")
 end
-LOG.info("versions table successfully reloaded")
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_sponsorships()')
 rescue => error
   LOG.error error
+else
+  LOG.info("sponsorships table successfully reloaded")
 end
-LOG.info("sponsorships table successfully reloaded")
 
 LOG.info('STOP')
