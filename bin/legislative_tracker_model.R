@@ -3,7 +3,7 @@ library(RMySQL)
 library(rms)
 
 
-con <-dbConnect(MySQL(), user = "ajcnews", password = "KbZ776Pd", host = "ajc-intranet.cgmwsizvte0i.us-east-1.rds.amazonaws.com", dbname = "gga_staging")
+con <-dbConnect(MySQL(), user = "ggaservice", password = "serviceat223", host = "ajc-web.cgmwsizvte0i.us-east-1.rds.amazonaws.com", dbname = "gga_staging")
 
 
 training_frame <- dbGetQuery(con,
@@ -29,9 +29,9 @@ training_frame <- dbGetQuery(con,
 	   passed
 	   from bills_attributes
 	   where author_party is not null and session_id IN ('20','21')")
-           
-           
-           
+
+
+
 testing <- dbGetQuery(con,
     "select id as bill_id, if(document_type='SB',1,0) as document_type,
            if(chamber_leader_author=1,2,majority_party_author) as author_category,
@@ -55,11 +55,11 @@ testing <- dbGetQuery(con,
 	   passed
 	   from bills_attributes
 	   where author_party is not null and session_id IN ('23')")
-           
 
 
 
-           
+
+
 training<-data.frame(as.factor(training_frame$passed))
 colnames(training)[1]<-"passed"
 training$passed<-as.factor(training_frame$passed)
