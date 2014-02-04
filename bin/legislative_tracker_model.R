@@ -1,9 +1,12 @@
-
 library(RMySQL)
 library(rms)
 
+gga_host<-Sys.getenv("GGA_HOST")
+gga_user<-Sys.getenv("GGA_USER")
+gga_password<-Sys.getenv("GGA_PASSWORD")
+gga_database<-Sys.getenv("GGA_DATABASE")
 
-con <-dbConnect(MySQL(), user = "ajcnews", password = "KbZ776Pd", host = "ajc-intranet.cgmwsizvte0i.us-east-1.rds.amazonaws.com", dbname = "gga_staging")
+con <-dbConnect(MySQL(), user = gga_user, password = gga_password, host = gga_host, dbname = gga_database)
 
 
 training_frame <- dbGetQuery(con,
@@ -25,6 +28,7 @@ training_frame <- dbGetQuery(con,
 	   summary_regulate,
            summary_health,
            summary_social,
+           if(summary_city=1 or summary_county=1 or summary_to_authorize=1 or summary_new_charter=1,1,0) as summary_local,
 	   days_from_may_submitted,
 	   passed
 	   from bills_attributes
@@ -51,6 +55,7 @@ testing <- dbGetQuery(con,
 	   summary_regulate,
            summary_health,
            summary_social,
+           if(summary_city=1 or summary_county=1 or summary_to_authorize=1 or summary_new_charter=1,1,0) as summary_local,
 	   days_from_may_submitted,
 	   passed
 	   from bills_attributes
@@ -81,6 +86,7 @@ training$days_from_may_submitted<-training_frame$days_from_may_submitted
 training$majority_sponsors<-training_frame$majority_sponsors
 training$minority_sponsors<-training_frame$minority_sponsors
 training$independent_sponsors<-as.factor(training_frame$sponsors_independent)
+training$summary_local<-as.factor(training_frame$summary_local)
 
 
 dd<-datadist(training)
@@ -88,7 +94,7 @@ options(datadist='dd')
 
 f<-lrm(
 passed~
-rcs(days_from_may_submitted,4)+
+rcs(days_from_may_submitted,7)+
 rcs(majority_sponsors,7)+
 rcs(minority_sponsors,7)+
 author_category+
@@ -96,12 +102,7 @@ leg_election_year+
 summary_amend_act+
 summary_homestead+
 summary_tax+
-summary_regulate+
-summary_to_authorize+
-summary_new_charter+
-summary_city+
-summary_county+
-summary_election+
+summary_local+
 summary_office+
 summary_social+
 summary_health,data=training,x=T,y=T)
@@ -110,7 +111,8 @@ summary_health,data=training,x=T,y=T)
 
 id<-rownames(testing)
 results <- data.frame(id)
+results$bill_passed<-testing$passed
 results$bill_id<-testing$bill_id
 results$prediction<-predict(f,testing,type="fitted")
 
-dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT", prediction="double"), row.names=FALSE)
+dbWriteTable(con,name = "predictions_test",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT", bill_passed="INT",prediction="double"), row.names=FALSE)
