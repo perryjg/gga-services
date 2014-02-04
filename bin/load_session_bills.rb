@@ -218,11 +218,28 @@ sessions.each do |session|
 end
 
 begin
+  ActiveRecord::Base.connection.execute('call.reload_bill_attributes')
+rescue => error
+  LOG.error error
+else
+  LOG.info("bills_attributes table created")
+end
+
+begin
+  system("R CMD BATCH bin/legislative_tracker_model.R")
+rescue => error
+  LOG.error error
+else
+  LOG.info("predictions calculates")
+end
+
+begin
   ActiveRecord::Base.connection.execute('call gga.reload_bills()')
 rescue => error
   LOG.error error
+else
+  LOG.info("bills table successfully reloaded")
 end
-LOG.info("bills table successfully reloaded")
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_bill_status_listings()')
