@@ -114,4 +114,4 @@ results$bill_passed<-testing$passed
 results$bill_id<-testing$bill_id
 results$prediction<-predict(f,testing,type="fitted")
 
-dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_passed="INT", bill_id="INT",prediction="double"), row.names=FALSE)
+dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT", bill_passed="INT",prediction="double"), row.names=FALSE)
