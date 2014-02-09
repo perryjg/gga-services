@@ -59,6 +59,7 @@ house = {
 
 bill_service = GGAServices::Legislation.new
 sessions.each do |session|
+  next
   begin
     bill_index = bill_service.get_legislation_for_session(session)
   rescue => error
@@ -81,10 +82,18 @@ sessions.each do |session|
       LOG.error error
     end
 
+    sleep(2)
     begin
       bill_detail = bill_service.get_legislation_detail( bill[:id] )
-    rescue => error
-      LOG.error( "#{error} (Bill ID: #{bill[:id]})" )
+    rescue
+      puts ">>>>>>>>>>> Sleeping 2 min <<<<<<<<<<<<<<"
+      begin
+        puts ">>>>>>>>>>>>> Trying again <<<<<<<<<<<<<<<"
+        sleep(120)
+        bill_detail = bill_service.get_legislation_detail( bill[:id] )
+      rescue => error
+        LOG.error( "#{error} (Bill ID: #{bill[:id]})" )
+      end
     end
 
     # puts ""
@@ -214,7 +223,6 @@ sessions.each do |session|
       # end
     end
   end
-  sleep(2)
 end
 
 begin
