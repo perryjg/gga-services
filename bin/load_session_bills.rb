@@ -225,7 +225,7 @@ sessions.each do |session|
 end
 
 begin
-  ActiveRecord::Base.connection.execute('call.reload_bill_attributes')
+  ActiveRecord::Base.connection.execute('call.reload_bill_attributes()')
 rescue => error
   LOG.error error
 else
