@@ -81,10 +81,18 @@ sessions.each do |session|
       LOG.error error
     end
 
+    sleep(2)
     begin
       bill_detail = bill_service.get_legislation_detail( bill[:id] )
-    rescue => error
-      LOG.error( "#{error} (Bill ID: #{bill[:id]})" )
+    rescue
+      puts ">>>>>>>>>>> Sleeping 2 min <<<<<<<<<<<<<<"
+      begin
+        puts ">>>>>>>>>>>>> Trying again <<<<<<<<<<<<<<<"
+        sleep(120)
+        bill_detail = bill_service.get_legislation_detail( bill[:id] )
+      rescue => error
+        LOG.error( "#{error} (Bill ID: #{bill[:id]})" )
+      end
     end
 
     # puts ""
@@ -214,11 +222,10 @@ sessions.each do |session|
       # end
     end
   end
-  sleep(2)
 end
 
 begin
-  ActiveRecord::Base.connection.execute('call.reload_bill_attributes')
+  ActiveRecord::Base.connection.execute('call.reload_bill_attributes()')
 rescue => error
   LOG.error error
 else
