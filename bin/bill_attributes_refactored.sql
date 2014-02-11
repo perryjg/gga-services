@@ -24,7 +24,7 @@ SELECT a.id, a.session_id, a.document_type, a.number,
        IF(summary LIKE '%election %',1,0) AS summary_election,
        IF(summary LIKE '% health %',1,0) AS summary_health,
        IF(summary LIKE '%firearm%' OR summary LIKE '% gun%' OR summary LIKE '% abort%' OR summary LIKE '%marriage%'
-OR summary LIKE '% pray%' OR summary LIKE '%alcohol%' OR summary LIKE '% sex%' OR summary LIKE '%controlled substance%',1,0) AS summary_social,
+OR summary LIKE '% pray%' OR summary LIKE '%alcohol%' OR summary LIKE '%controlled substance%',1,0) AS summary_social,
        IF(SUM(IF(b.code IN ('HSG','SSG'),1,0))>0,1,0) AS passed,
        IF(SUM(IF(b.code IN ('HCFR','SCFR'),1,0) )>0,1,0) AS out_committee,
        MAX(b.status_date) AS max_action_date,
