@@ -172,7 +172,7 @@ SELECT bill_id,
 	SUM(IF(l.title IS NULL AND sequence<>'1' AND party = 'Republican',1,0)) AS other_sponsors_republican,
 	SUM(IF(l.title IS NULL AND sequence<>'1' AND party = 'Democrat',1,0)) AS other_sponsors_democrat,
         SUM(IF(sequence<>'1' AND party NOT IN ('Democrat','Republican'),1,0)) AS sponsors_independent
-        FROM legislative_services_amended AS l
+        FROM legislative_services AS l
     JOIN 
     (
     SELECT a.bill_id,a.member_id,a.sequence,b.`session_id`
@@ -297,7 +297,7 @@ SUM(IF(lm.party NOT IN ('Republican','Democrat') AND bs.sequence=1,1,0)) AS inde
 FROM
 (SELECT l.member_id, l.`party`, l.session_id
 FROM member_committees AS m
-JOIN legislative_services_amended AS l
+JOIN legislative_services AS l
 ON l.`member_id`=m.`member_id`
 AND l.`session_id`=m.session_id
 WHERE m.committee_name NOT IN ('Rules','Administrative Affairs','Assignments')
