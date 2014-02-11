@@ -39,7 +39,7 @@ training_frame <- dbGetQuery(con,
 	   rules_chair_sponsor,
 	   chamber_leader_sponsor,
 	   passed
-	   from bills_attributes_backup
+	   from bills_attributes
 	   where author_party is not null and session_id IN ('20','21')")
 
 
@@ -74,7 +74,7 @@ testing <- dbGetQuery(con,
 	   rules_chair_sponsor,
 	   chamber_leader_sponsor,
 	   passed
-	   from bills_attributes_backup
+	   from bills_attributes
 	   where author_party is not null and session_id IN ('23')")
 
 
@@ -99,7 +99,6 @@ training$leg_election_year<-as.factor(training_frame$leg_election_year)
 training$days_from_may_submitted<-training_frame$days_from_may_submitted
 training$majority_sponsors<-training_frame$majority_sponsors
 training$minority_sponsors<-training_frame$minority_sponsors
-training$independent_sponsors<-as.factor(training_frame$sponsors_independent)
 training$summary_local_new<-as.factor(training_frame$summary_local_new)
 training$majority_sponsors_cut<-training_frame$majority_sponsors_cut
 training$minority_sponsors_cut<-training_frame$minority_sponsors_cut

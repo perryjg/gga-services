@@ -24,7 +24,7 @@ SELECT a.id, a.session_id, a.document_type, a.number,
        IF(summary LIKE '%election %',1,0) AS summary_election,
        IF(summary LIKE '% health %',1,0) AS summary_health,
        IF(summary LIKE '%firearm%' OR summary LIKE '% gun%' OR summary LIKE '% abort%' OR summary LIKE '%marriage%'
-OR summary LIKE '% pray%' OR summary LIKE '%alcohol%' OR summary LIKE '% sex%' OR summary LIKE '%controlled substance%' OR summary LIKE '%immigra%',1,0) AS summary_social,
+OR summary LIKE '% pray%' OR summary LIKE '%alcohol%' OR summary LIKE '% sex%' OR summary LIKE '%controlled substance%',1,0) AS summary_social,
        IF(SUM(IF(b.code IN ('HSG','SSG'),1,0))>0,1,0) AS passed,
        IF(SUM(IF(b.code IN ('HCFR','SCFR'),1,0) )>0,1,0) AS out_committee,
        MAX(b.status_date) AS max_action_date,
@@ -101,7 +101,18 @@ ADD COLUMN senate_date_passed DATE,
 ADD COLUMN rules_chair_author INT,
 ADD COLUMN rules_chair_sponsor INT,
 ADD COLUMN minority_leader_sponsor INT,
-ADD COLUMN minority_leader_author INT;
+ADD COLUMN minority_leader_author INT,
+ADD COLUMN democrat_chairman_sponsors INT,
+ADD COLUMN republican_chairman_sponsors INT,
+ADD COLUMN independent_chairman_sponsors INT,
+ADD COLUMN majority_chairman_sponsors INT,
+ADD COLUMN minority_chairman_sponsors INT,
+ADD COLUMN democrat_chairman_author INT,
+ADD COLUMN republican_chairman_author INT,
+ADD COLUMN independent_chairman_author INT,
+ADD COLUMN majority_chairman_author INT,
+ADD COLUMN minority_chairman_author INT;
+
 
 
 /* Assign majority_party information */
@@ -245,6 +256,8 @@ SET a.`leg_election_year`=t.leg_election_year,
 
 WHERE a.id=t.id;
 
+
+/*add key leadership author and sponsorship*/
 UPDATE bills_attributes a, (
 select b.id as id,
 sum(if(sl.sequence=1 and sl.body in ('house','senate'),1,0)) as chamber_leader_author,
@@ -271,4 +284,58 @@ set a.chamber_leader_sponsor=t.chamber_leader_sponsor,
 	a.minority_leader_sponsor=t.minority_leader_sponsor
 
 where a.id=t.id;
+
+/*add other chairman sponsorship information*/
+
+UPDATE bills_attributes a, (
+SELECT bs.id, SUM(IF(lm.party='Democrat' AND bs.sequence<>1,1,0)) AS democrat_chairman_sponsors,
+SUM(IF(lm.party='Republican' AND bs.sequence<>1,1,0)) AS republican_chairman_sponsors,
+SUM(IF(lm.party NOT IN ('Republican','Democrat') AND bs.sequence<>1,1,0)) AS independent_chairman_sponsors,
+SUM(IF(lm.party='Democrat' AND bs.sequence=1,1,0)) AS democrat_chairman_author,
+SUM(IF(lm.party='Republican' AND bs.sequence=1,1,0)) AS republican_chairman_author,
+SUM(IF(lm.party NOT IN ('Republican','Democrat') AND bs.sequence=1,1,0)) AS independent_chairman_author
+FROM
+(SELECT l.member_id, l.`party`, l.session_id
+FROM member_committees AS m
+JOIN legislative_services_amended AS l
+ON l.`member_id`=m.`member_id`
+AND l.`session_id`=m.session_id
+WHERE m.committee_name NOT IN ('Rules','Administrative Affairs','Assignments')
+AND m.role='Chairman'
+GROUP BY l.member_id, l.party, l.session_id) AS lm
+RIGHT JOIN
+(SELECT b.id, s.sequence, b.session_id, s.member_id
+FROM bills_attributes AS b
+JOIN sponsorships AS s
+ON b.id=s.bill_id) AS bs
+ON bs.session_id=lm.session_id
+AND bs.member_id=lm.member_id
+GROUP BY bs.id
+) t
+
+SET a.democrat_chairman_sponsors=t.democrat_chairman_sponsors,
+	a.republican_chairman_sponsors=t.republican_chairman_sponsors,
+	a.independent_chairman_sponsors=t.independent_chairman_sponsors,
+	a.democrat_chairman_author=t.democrat_chairman_author,
+	a.republican_chairman_author=t.republican_chairman_author,
+	a.independent_chairman_author=t.independent_chairman_author
+
+WHERE a.id=t.id;
+
+UPDATE bills_attributes a, (
+SELECT id,
+    IF(majority_party=1,republican_chairman_author,democrat_chairman_author) AS majority_chairman_author,
+    IF(majority_party=1,republican_chairman_sponsors,democrat_chairman_sponsors) AS majority_chairman_sponsors,
+    IF(majority_party=0,republican_chairman_author,democrat_chairman_author) AS minority_chairman_author,
+    IF(majority_party=0,republican_chairman_sponsors,democrat_chairman_sponsors) AS minority_chairman_sponsors
+    FROM bills_attributes
+	GROUP BY id) t
+
+SET a.majority_chairman_author=t.majority_chairman_author,
+	a.majority_chairman_sponsors=t.majority_chairman_sponsors,
+	a.minority_chairman_author=t.minority_chairman_author,
+	a.minority_chairman_sponsors=t.minority_chairman_sponsors
+
+WHERE a.id=t.id;
+
 
