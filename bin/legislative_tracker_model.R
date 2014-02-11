@@ -35,9 +35,9 @@ training_frame <- dbGetQuery(con,
 	   days_from_may_submitted,
 	   summary_county_names,
 	   summary_city_of,
-	   minority_leader_sponsor,
-	   rules_chair_sponsor,
-	   chamber_leader_sponsor,
+	   if(minority_leader_sponsor>0,1,0) as minority_leader_sponsor,
+	   if(rules_chair_sponsor>0,1,0) as rules_chair_sponsor,
+	   if(chamber_leader_sponsor>0,1,0) as chamber_leader_sponsor,
 	   passed
 	   from bills_attributes
 	   where author_party is not null and session_id IN ('20','21')")
@@ -70,9 +70,9 @@ testing <- dbGetQuery(con,
 	   days_from_may_submitted,
 	   summary_county_names,
 	   summary_city_of,
-	   minority_leader_sponsor,
-	   rules_chair_sponsor,
-	   chamber_leader_sponsor,
+	   if(minority_leader_sponsor>0,1,0) as minority_leader_sponsor,
+	   if(rules_chair_sponsor>0,1,0) as rules_chair_sponsor,
+	   if(chamber_leader_sponsor>0,1,0) as chamber_leader_sponsor,
 	   passed
 	   from bills_attributes
 	   where author_party is not null and session_id IN ('23')")
