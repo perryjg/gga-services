@@ -233,7 +233,7 @@ else
 end
 
 begin
-  system("R CMD BATCH bin/legislative_tracker_model.R")
+  system("R CMD BATCH #{File.dirname(__FILE__)}/legislative_tracker_model.R")
 rescue => error
   LOG.error error
 else
