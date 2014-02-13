@@ -259,35 +259,35 @@ WHERE a.id=t.id;
 
 /*add key leadership author and sponsorship*/
 UPDATE bills_attributes a, (
-select b.id as id,
-sum(if(sl.sequence=1 and sl.body in ('house','senate'),1,0)) as chamber_leader_author,
-sum(if(sl.sequence=1 and sl.body in ('rules'),1,0)) as rules_chair_author,
-sum(if(sl.sequence<>1 and sl.body in ('house','senate'),1,0)) as chamber_leader_sponsor,
-sum(if(sl.sequence<>1 and sl.body in ('rules'),1,0)) as rules_chair_sponsor,
-sum(if(sl.sequence=1 and sl.body in ('floor'),1,0)) as floor_leader_author,
-sum(if(sl.sequence<>1 and sl.body in ('floor'),1,0)) as floor_leader_sponsors,
-sum(if(sl.sequence=1 and sl.body in ('minority'),1,0)) as minority_leader_author,
-sum(if(sl.sequence<>1 and sl.body in ('minority'),1,0)) as minority_leader_sponsor
-from bills_attributes as b
-left join
-(select l.leg_year_submitted, l.body, s.*
-from sponsorships s
-join leadership_roles_by_year l
-on s.member_id=l.member_id) as sl
-on sl.bill_id=b.id
-and b.leg_year_submitted=sl.leg_year_submitted
-group by b.id) t
+SELECT b.id AS id,
+SUM(IF(sl.sequence=1 AND sl.body IN ('house','senate'),1,0)) AS chamber_leader_author,
+SUM(IF(sl.sequence=1 AND sl.body IN ('rules'),1,0)) AS rules_chair_author,
+SUM(IF(sl.sequence<>1 AND sl.body IN ('house','senate'),1,0)) AS chamber_leader_sponsor,
+SUM(IF(sl.sequence<>1 AND sl.body IN ('rules'),1,0)) AS rules_chair_sponsor,
+SUM(IF(sl.sequence=1 AND sl.body IN ('minority'),1,0)) AS minority_leader_author,
+SUM(IF(sl.sequence<>1 AND sl.body IN ('minority'),1,0)) AS minority_leader_sponsor,
+SUM(IF(sl.sequence=1 AND sl.body IN ('floor'),1,0)) AS floor_leader_author,
+SUM(IF(sl.sequence<>1 AND sl.body IN ('floor'),1,0)) AS floor_leader_sponsors
+FROM bills_attributes AS b
+LEFT JOIN
+(SELECT l.leg_year_submitted, l.body, s.*
+FROM sponsorships s
+JOIN leadership_roles_by_year l
+ON s.member_id=l.member_id) AS sl
+ON sl.bill_id=b.id
+AND b.leg_year_submitted=sl.leg_year_submitted
+GROUP BY b.id) t
 
-set a.chamber_leader_sponsor=t.chamber_leader_sponsor,
+SET a.chamber_leader_sponsor=t.chamber_leader_sponsor,
 	a.chamber_leader_author=t.chamber_leader_author,
 	a.rules_chair_sponsor=t.rules_chair_sponsor,
 	a.rules_chair_author=t.rules_chair_author,
 	a.minority_leader_author=t.minority_leader_author,
 	a.minority_leader_sponsor=t.minority_leader_sponsor,
 	a.floor_leader_author=t.floor_leader_author,
-	a.floor_leader_sponsors=t.floor_leader_sponsors
-	
-where a.id=t.id;
+	a.floor_leader_sponsors=t.floor_leader_sponsors	
+
+WHERE a.id=t.id;
 
 /*add other chairman sponsorship information*/
 
