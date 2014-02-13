@@ -264,6 +264,8 @@ sum(if(sl.sequence=1 and sl.body in ('house','senate'),1,0)) as chamber_leader_a
 sum(if(sl.sequence=1 and sl.body in ('rules'),1,0)) as rules_chair_author,
 sum(if(sl.sequence<>1 and sl.body in ('house','senate'),1,0)) as chamber_leader_sponsor,
 sum(if(sl.sequence<>1 and sl.body in ('rules'),1,0)) as rules_chair_sponsor,
+sum(if(sl.sequence=1 and sl.body in ('floor'),1,0)) as floor_leader_author,
+sum(if(sl.sequence<>1 and sl.body in ('floor'),1,0)) as floor_leader_sponsors,
 sum(if(sl.sequence=1 and sl.body in ('minority'),1,0)) as minority_leader_author,
 sum(if(sl.sequence<>1 and sl.body in ('minority'),1,0)) as minority_leader_sponsor
 from bills_attributes as b
@@ -281,8 +283,10 @@ set a.chamber_leader_sponsor=t.chamber_leader_sponsor,
 	a.rules_chair_sponsor=t.rules_chair_sponsor,
 	a.rules_chair_author=t.rules_chair_author,
 	a.minority_leader_author=t.minority_leader_author,
-	a.minority_leader_sponsor=t.minority_leader_sponsor
-
+	a.minority_leader_sponsor=t.minority_leader_sponsor,
+	a.floor_leader_author=t.floor_leader_author,
+	a.floor_leader_sponsors=t.floor_leader_sponsors
+	
 where a.id=t.id;
 
 /*add other chairman sponsorship information*/
