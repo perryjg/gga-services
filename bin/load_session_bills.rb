@@ -272,4 +272,12 @@ else
   LOG.info("sponsorships table successfully reloaded")
 end
 
+begin
+  ActiveRecord::Base.connection.execute('call gga.update_watched_bills()')
+rescue => error
+  LOG.error error
+else
+  LOG.info("watched_bills table successfully updated")
+end
+
 LOG.info('STOP')
