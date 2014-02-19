@@ -5,7 +5,6 @@ BEGIN
 
   alter table bills
     add column bill_passed tinyint,
-    add column passed_over tinyint,
     add column predictions double;
 
   insert into gga.bills
