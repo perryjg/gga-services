@@ -8,4 +8,13 @@ BEGIN
   from gga_staging.bill_status_listings a
   join gga.bills b
     on a.bill_id = b.id;
+
+  update bills
+  set passed_over = 1
+  where id in (
+    select distinct bill_id
+    from bill_status_listings
+    where code in ('HPA','SPA')
+      or legislation_type != 'GEN'
+  );
 END
