@@ -59,7 +59,6 @@ house = {
 
 bill_service = GGAServices::Legislation.new
 sessions.each do |session|
-  next
   begin
     bill_index = bill_service.get_legislation_for_session(session)
   rescue => error
