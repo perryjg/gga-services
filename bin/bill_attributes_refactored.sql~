@@ -259,35 +259,31 @@ WHERE a.id=t.id;
 
 /*add key leadership author and sponsorship*/
 UPDATE bills_attributes a, (
-SELECT b.id AS id,
-SUM(IF(sl.sequence=1 AND sl.body IN ('house','senate'),1,0)) AS chamber_leader_author,
-SUM(IF(sl.sequence=1 AND sl.body IN ('rules'),1,0)) AS rules_chair_author,
-SUM(IF(sl.sequence<>1 AND sl.body IN ('house','senate'),1,0)) AS chamber_leader_sponsor,
-SUM(IF(sl.sequence<>1 AND sl.body IN ('rules'),1,0)) AS rules_chair_sponsor,
-SUM(IF(sl.sequence=1 AND sl.body IN ('minority'),1,0)) AS minority_leader_author,
-SUM(IF(sl.sequence<>1 AND sl.body IN ('minority'),1,0)) AS minority_leader_sponsor,
-SUM(IF(sl.sequence=1 AND sl.body IN ('floor'),1,0)) AS floor_leader_author,
-SUM(IF(sl.sequence<>1 AND sl.body IN ('floor'),1,0)) AS floor_leader_sponsors
-FROM bills_attributes AS b
-LEFT JOIN
-(SELECT l.leg_year_submitted, l.body, s.*
-FROM sponsorships s
-JOIN leadership_roles_by_year l
-ON s.member_id=l.member_id) AS sl
-ON sl.bill_id=b.id
-AND b.leg_year_submitted=sl.leg_year_submitted
-GROUP BY b.id) t
+select b.id as id,
+sum(if(sl.sequence=1 and sl.body in ('house','senate'),1,0)) as chamber_leader_author,
+sum(if(sl.sequence=1 and sl.body in ('rules'),1,0)) as rules_chair_author,
+sum(if(sl.sequence<>1 and sl.body in ('house','senate'),1,0)) as chamber_leader_sponsor,
+sum(if(sl.sequence<>1 and sl.body in ('rules'),1,0)) as rules_chair_sponsor,
+sum(if(sl.sequence=1 and sl.body in ('minority'),1,0)) as minority_leader_author,
+sum(if(sl.sequence<>1 and sl.body in ('minority'),1,0)) as minority_leader_sponsor
+from bills_attributes as b
+left join
+(select l.leg_year_submitted, l.body, s.*
+from sponsorships s
+join leadership_roles_by_year l
+on s.member_id=l.member_id) as sl
+on sl.bill_id=b.id
+and b.leg_year_submitted=sl.leg_year_submitted
+group by b.id) t
 
-SET a.chamber_leader_sponsor=t.chamber_leader_sponsor,
+set a.chamber_leader_sponsor=t.chamber_leader_sponsor,
 	a.chamber_leader_author=t.chamber_leader_author,
 	a.rules_chair_sponsor=t.rules_chair_sponsor,
 	a.rules_chair_author=t.rules_chair_author,
 	a.minority_leader_author=t.minority_leader_author,
-	a.minority_leader_sponsor=t.minority_leader_sponsor,
-	a.floor_leader_author=t.floor_leader_author,
-	a.floor_leader_sponsors=t.floor_leader_sponsors	
+	a.minority_leader_sponsor=t.minority_leader_sponsor
 
-WHERE a.id=t.id;
+where a.id=t.id;
 
 /*add other chairman sponsorship information*/
 
@@ -341,126 +337,5 @@ SET a.majority_chairman_author=t.majority_chairman_author,
 	a.minority_chairman_sponsors=t.minority_chairman_sponsors
 
 WHERE a.id=t.id;
-
-
-/* Added more variables for new model */
-
-ALTER TABLE bills_attributes
-ADD COLUMN min_movement_date_second_year DATETIME,
-ADD COLUMN max_movement_date_second_year DATETIME,
-ADD COLUMN sent_gov_date DATETIME,
-ADD COLUMN min_pass_date DATETIME,
-ADD COLUMN max_pass_date DATETIME,
-ADD COLUMN crossover_date_first DATE,
-ADD COLUMN crossover_date_second DATE,
-ADD COLUMN chamber_passes INT,
-ADD COLUMN local_label INT,
-ADD COLUMN days_from_may_passed_first INT;
- 
-UPDATE bills_attributes a, (
-SELECT b.id, IF(b.`legislation_type`='LOC',1,0) AS local_label
-FROM bills b
-JOIN bills_attributes ba
-ON ba.id=b.`id`
-) t
- 
-SET a.local_label=t.local_label
- 
-WHERE a.id=t.id;
-
-UPDATE bills_attributes a, (
-SELECT ba.id, MIN(c.date_year_submitted) AS crossover_date_first, MAX(c.date_year_submitted) AS crossover_date_second
-FROM bills_attributes ba
-JOIN crossover_day c
-ON c.session_id=ba.`session_id`
-GROUP BY ba.id) t
-
-SET a.crossover_date_first=t.crossover_date_first,
-    a.crossover_date_second=t.crossover_date_second
-    
-WHERE a.id=t.id;
-
-
-UPDATE bills_attributes a, (
-SELECT ba.id,
-	MIN(status_date) AS min_movement_date_second_year,
- 	MAX(status_date) AS max_movement_date_second_year
-FROM bill_status_listings bsl
-JOIN bills_attributes ba
-ON ba.id=bsl.`bill_id`
-WHERE DATE(status_date)<=ba.crossover_date_second
-AND CODE NOT IN ('HSG','SSG','Signed Gov','EFF')
-AND YEAR(status_date)>leg_year_submitted
-GROUP BY ba.id) t
-
-SET a.min_movement_date_second_year=t.min_movement_date_second_year,
-    a.max_movement_date_second_year=t.max_movement_date_second_year
-
-
-WHERE a.id=t.id;
-
-UPDATE bills_attributes a, (
-SELECT ba.id,
-	MIN(status_date) AS min_pass_date,
- 	MAX(status_date) AS max_pass_date,
-        COUNT(*) AS chamber_passes
-FROM bill_status_listings bsl
-JOIN bills_attributes ba
-ON ba.id=bsl.`bill_id`
-WHERE CODE IN ('HPA','SPA','HRECP','SRECP')
-GROUP BY ba.id) t
-
-SET a.min_pass_date=t.min_pass_date,
-    a.max_pass_date=t.max_pass_date,
-    a.chamber_passes=t.chamber_passes
-
-
-WHERE a.id=t.id;
-
-UPDATE bills_attributes
-SET chamber_passes=0
-WHERE chamber_passes IS NULL;
-
-UPDATE bills_attributes a, (
-SELECT ba.id,
-	MIN(status_date) AS out_committee_date
-FROM bill_status_listings bsl
-JOIN bills_attributes ba
-ON ba.id=bsl.`bill_id`
-WHERE CODE IN ('HCFR','SCFR')
-GROUP BY ba.id) t
-
-SET a.out_committee_date=t.out_committee_date
-
-
-WHERE a.id=t.id;
-
-UPDATE bills_attributes a, (
-SELECT ba.id,
-	MIN(status_date) AS sent_gov_date
-FROM bill_status_listings bsl
-JOIN bills_attributes ba
-ON ba.id=bsl.`bill_id`
-WHERE CODE IN ('HSG','SSG')
-GROUP BY ba.id) t
-
-SET a.sent_gov_date=t.sent_gov_date
-
-
-WHERE a.id=t.id;
-
-
-UPDATE bills_attributes a, (
-SELECT id,
-    DATEDIFF(MAKEDATE(YEAR(min_pass_date),121),min_pass_date) AS days_from_may_passed_first
-
-
-FROM bills_attributes
-GROUP BY id) t
-
-SET a.days_from_may_passed_first=t.days_from_may_passed_first
-
-WHERE a.id=t.id;
-
 
 
