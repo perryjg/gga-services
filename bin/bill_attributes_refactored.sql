@@ -354,9 +354,15 @@ ADD COLUMN max_pass_date DATETIME,
 ADD COLUMN crossover_date_first DATE,
 ADD COLUMN crossover_date_second DATE,
 ADD COLUMN chamber_passes INT,
+ADD COLUMN chamber_passes_pre_crossover INT,
 ADD COLUMN local_label INT,
-ADD COLUMN days_from_may_passed_first INT;
- 
+ADD COLUMN days_from_may_passed_first INT,
+ADD COLUMN days_from_crossover_last_moved INT,
+ADD COLUMN last_moved_pre_crossover DATETIME,
+ADD COLUMN days_from_crossover_last_moved INT,
+ADD COLUMN last_precross_move_withdrawn_tabled INT,
+ADD COLUMN last_precross_move_code VARCHAR(50);
+
 UPDATE bills_attributes a, (
 SELECT b.id, IF(b.`legislation_type`='LOC',1,0) AS local_label
 FROM bills b
@@ -395,7 +401,7 @@ GROUP BY ba.id) t
 
 SET a.min_movement_date_second_year=t.min_movement_date_second_year,
     a.max_movement_date_second_year=t.max_movement_date_second_year
-
+f
 
 WHERE a.id=t.id;
 
@@ -462,5 +468,74 @@ SET a.days_from_may_passed_first=t.days_from_may_passed_first
 
 WHERE a.id=t.id;
 
+UPDATE bills_attributes a, (
+SELECT ba.id,
+	COUNT(*) AS chamber_passes_pre_crossover
+FROM bill_status_listings bsl
+JOIN bills_attributes ba
+ON ba.id=bsl.`bill_id`
+WHERE CODE IN ('HPA','SPA','HRECP','SRECP')
+AND DATE(bsl.status_date)<=DATE(ba.crossover_date_second)
+GROUP BY ba.id) t
 
+SET a.chamber_passes_pre_crossover=t.chamber_passes_pre_crossover
+
+
+WHERE a.id=t.id;
+
+UPDATE bills_attributes
+SET chamber_passes_pre_crossover=0
+WHERE chamber_passes_pre_crossover IS NULL;
+
+
+UPDATE bills_attributes a, (
+SELECT ba.id, 
+	MAX(status_date) AS last_moved_pre_crossover
+
+FROM bill_status_listings bsl
+JOIN bills_attributes ba
+ON ba.id=bsl.`bill_id`
+WHERE  DATE(bsl.status_date)<=DATE(ba.crossover_date_second)
+GROUP BY ba.id) t
+
+SET a.last_moved_pre_crossover=t.last_moved_pre_crossover
+
+WHERE a.id=t.id;
+
+
+
+UPDATE bills_attributes a, (
+SELECT id,
+    DATEDIFF(crossover_date_second,last_moved_pre_crossover) AS days_from_crossover_last_moved
+
+
+FROM bills_attributes
+GROUP BY id) t
+
+SET a.days_from_crossover_last_moved=t.days_from_crossover_last_moved
+
+WHERE a.id=t.id;
+
+
+UPDATE bills_attributes a, (
+SELECT t.id, CODE AS last_precross_move_code,
+IF(description LIKE '%withdraw%' OR description LIKE '%table%',1,0) AS last_precross_move_withdrawn_tabled
+FROM bill_status_listings bsl
+JOIN
+(SELECT ba.id, passed, ba.`session_id`,
+	MAX(status_date) AS last_moved_pre_crossover
+
+FROM bill_status_listings bsl
+JOIN bills_attributes ba
+ON ba.id=bsl.`bill_id`
+WHERE  DATE(bsl.status_date)<=DATE(ba.crossover_date_second)
+GROUP BY ba.id) t
+ON t.id=bsl.`bill_id`
+AND t.last_moved_pre_crossover=bsl.`status_date`
+WHERE CODE NOT IN ('Signed Gov','HSG','SSG')) t
+
+SET a.last_precross_move_withdrawn_tabled=t.last_precross_move_withdrawn_tabled,
+    a.last_precross_move_code=t.last_precross_move_code
+    
+WHERE a.id=t.id;
 
