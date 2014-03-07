@@ -233,11 +233,19 @@ else
 end
 
 begin
+  ActiveRecord::Base.connection.execute('call archive_predictions()')
+rescue => error
+  LOG.error error
+else
+  LOG.info("predictions archived")
+end
+
+begin
   system("R CMD BATCH #{File.dirname(__FILE__)}/crossover_model_final.R")
 rescue => error
   LOG.error error
 else
-  LOG.info("predictions calculates")
+  LOG.info("predictions calculated")
 end
 
 begin
