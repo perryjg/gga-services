@@ -1,12 +1,16 @@
 library(RMySQL)
 library(rms)
 
+gga_host<-Sys.getenv("GGA_HOST")
+gga_user<-Sys.getenv("GGA_USER")
+gga_password<-Sys.getenv("GGA_PASSWORD")
+gga_database<-Sys.getenv("GGA_DATABASE")
 
-con <-dbConnect(MySQL(), user = "ajcnews", password = "KbZ776Pd", host = "ajc-intranet.cgmwsizvte0i.us-east-1.rds.amazonaws.com", dbname = "predictions")
+con <-dbConnect(MySQL(), user = gga_user, password = gga_password, host = gga_host, dbname = gga_database)
 
 
 training_frame <- dbGetQuery(con,
-    "SELECT id AS bill_id, 
+    "SELECT id AS bill_id,
 	   IF(document_type='SB',1,0) AS document_type,
 	   session_id,
            IF(chamber_leader_author=1,6,IF(rules_chair_author=1,5,IF(floor_leader_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))) AS author_category_chairs,
@@ -55,7 +59,7 @@ training_frame <- dbGetQuery(con,
 
 
 testing <- dbGetQuery(con,
-    "SELECT id AS bill_id, 
+    "SELECT id AS bill_id,
 	   IF(document_type='SB',1,0) AS document_type,
 	   session_id,
            IF(chamber_leader_author=1,6,IF(rules_chair_author=1,5,IF(floor_leader_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))) AS author_category_chairs,
