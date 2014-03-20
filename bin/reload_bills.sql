@@ -4,7 +4,7 @@ BEGIN
   create table gga.bills like gga_staging.bills;
 
   alter table bills
-    add column bill_passed tinyint,
+    add column bill_passed tinyint DEFAULT 0,
     add column predictions double;
 
   insert into gga.bills

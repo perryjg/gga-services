@@ -265,6 +265,14 @@ else
 end
 
 begin
+  ActiveRecord::Base.connection.execute('call gga.create_passed_table()')
+rescue => error
+  LOG.error error
+else
+  LOG.info("passed table successfully created")
+end
+
+begin
   ActiveRecord::Base.connection.execute('call gga.reload_versions()')
 rescue => error
   LOG.error error
