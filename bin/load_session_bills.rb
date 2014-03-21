@@ -264,13 +264,13 @@ else
   LOG.info("bill_status_listings table successfully reloaded")
 end
 
-begin
-  ActiveRecord::Base.connection.execute('call gga.create_passed_table()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("passed table successfully created")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call gga.create_passed_table()')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("passed table successfully created")
+# end
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_versions()')
