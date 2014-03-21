@@ -232,21 +232,21 @@ else
   LOG.info("bills_attributes table created")
 end
 
-begin
-  ActiveRecord::Base.connection.execute('call archive_predictions()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("predictions archived")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call archive_predictions()')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("predictions archived")
+# end
 
-begin
-  system("R CMD BATCH #{File.dirname(__FILE__)}/crossover_model_final.R")
-rescue => error
-  LOG.error error
-else
-  LOG.info("predictions calculated")
-end
+# begin
+#   system("R CMD BATCH #{File.dirname(__FILE__)}/crossover_model_final.R")
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("predictions calculated")
+# end
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_bills()')
