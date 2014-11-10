@@ -4,12 +4,20 @@ require 'active_support/core_ext'
 require 'mysql2'
 require_relative '../lib/gga_services'
 
+# ActiveRecord::Base.establish_connection(
+#   adapter: "mysql2",
+#   host: "ajc-web.cgmwsizvte0i.us-east-1.rds.amazonaws.com",
+#   username: "newsappweb",
+#   password: "webat223",
+#   database: "gga_staging"
+# )
+
 ActiveRecord::Base.establish_connection(
   adapter: "mysql2",
-  host: "localhost",
-  username: "john",
-  password: "schuster",
-  database: "gga"
+  host: ENV["GGA_HOST"],
+  username: ENV["GGA_USER"],
+  password: ENV["GGA_PASSWORD"],
+  database: ENV["GGA_DATABASE"]
 )
 
 class Member < ActiveRecord::Base
@@ -22,9 +30,10 @@ end
 
 member_service = GGAServices::Member.new
 # sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [22,21,20,18,15,14,13,11,7,6,1]
+sessions = [23]
 
 sessions.each do |session|
+  puts ">>>>>>>>>SESSION: #{session}"
   members = member_service.get_members_by_session(session)
 
   members.each do |member|
@@ -74,5 +83,6 @@ sessions.each do |session|
     Member.find_or_create_by(id: member_detail[:id]).update(member_detail)
 
     sleep(1)
+    break
   end
 end
