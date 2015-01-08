@@ -41,6 +41,7 @@ training_frame <- dbGetQuery(con,
 	   if(chamber_leader_sponsor>0,1,0) as chamber_leader_sponsor,
 	   if(majority_leadership_sponsors>0,1,0) as majority_leadership_sponsor,
 	   if(floor_leader_sponsors>0,1,0) as floor_leader_sponsor,
+           if(majority_chairman_sponsors>0,1,0) as majority_chairman_sponsor,
 	   IF(YEAR(sent_gov_date)=leg_year_submitted,1,0) AS passed
 	   from bills_attributes
 	   where author_party is not null and session_id IN ('14','18','20','21','23')
@@ -79,6 +80,7 @@ testing <- dbGetQuery(con,
 	   if(rules_chair_sponsor>0,1,0) as rules_chair_sponsor,
 	   if(chamber_leader_sponsor>0,1,0) as chamber_leader_sponsor,
 	   if(majority_leadership_sponsors>0,1,0) as majority_leadership_sponsor,
+           if(majority_chairman_sponsors>0,1,0) as majority_chairman_sponsor,
 	   if(floor_leader_sponsors>0,1,0) as floor_leader_sponsor,
 	   IF(YEAR(sent_gov_date)=leg_year_submitted,1,0) AS passed
 	   from bills_attributes
@@ -117,6 +119,7 @@ training$chamber_leader_sponsor<-as.factor(training_frame$chamber_leader_sponsor
 training$bi_partisan_sponsorship<-as.factor(training_frame$bi_partisan_sponsorship)
 training$author_category_chairs<-as.factor(training_frame$author_category_chairs)
 training$majority_leadership_sponsor<-as.factor(training_frame$majority_leadership_sponsor)
+training$majority_chairman_sponsor<-as.factor(training_frame$majority_chairman_sponsor)
 training$local_label<-as.factor(training_frame$local_label)
 training$floor_leader_sponsor<-as.factor(training_frame$floor_leader_sponsor)
 
@@ -140,6 +143,7 @@ summary_homestead+
 minority_leader_sponsor+
 floor_leader_sponsor+
 majority_leadership_sponsor+
+majority_chairman_sponsor+
 summary_tax+
 summary_social+
 summary_health,data=training,x=T,y=T)
