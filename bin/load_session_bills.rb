@@ -261,7 +261,7 @@ else
 end
 
 begin
-  system("R CMD BATCH #{File.dirname(__FILE__)}/crossover_model_final.R")
+  system("R CMD BATCH #{File.dirname(__FILE__)}/legislative_tracker_model.R")
 rescue => error
   LOG.error error
 else

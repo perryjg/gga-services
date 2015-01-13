@@ -45,12 +45,14 @@ items.each do |select|
   end
 
   select.children.each do |option|
-    next if option["value"].match(/2013/)
+    next unless option["value"]
+    # next if option["value"].match(/2014/)
     day = Hash.new
     day[:legislative_day_date] = option["value"]
 
     option.children[0].content.match(/Day (\d+)/)
     day[:id] = $1.to_i
+    puts day
 
     begin
       LegislativeDay.find_or_create_by(id: day[:id]).update(day)
