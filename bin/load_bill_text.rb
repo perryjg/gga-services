@@ -9,22 +9,13 @@ LOG = Logger.new('logs/text_log.txt', 'weekly')
 LOG.level = Logger::INFO
 LOG.info('START')
 
-
 ActiveRecord::Base.establish_connection(
   adapter: "mysql2",
-  host: "ajc-web.cgmwsizvte0i.us-east-1.rds.amazonaws.com",
-  username: "newsappweb",
-  password: "newsapp223",
-  database: "gga_staging"
+  host: ENV["GGA_HOST"],
+  username: ENV["GGA_USER"],
+  password: ENV["GGA_PASSWORD"],
+  database: ENV["GGA_DATABASE"]
 )
-
-# ActiveRecord::Base.establish_connection(
-#   adapter: "mysql2",
-#   host: ENV["GGA_HOST"],
-#   username: ENV["GGA_USER"],
-#   password: ENV["GGA_PASSWORD"],
-#   database: ENV["GGA_DATABASE"]
-# )
 
 class Version < ActiveRecord::Base
 end
@@ -34,7 +25,7 @@ class Text < ActiveRecord::Base
   self.primary_key = "version_id"
 end
 
-bills = Version.all.order(id: :desc).where("id < 29939")
+bills = Version.all.order(id: :desc).where("id > 145129")
 
 text_service = GGAServices::LegislationText.new
 

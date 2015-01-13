@@ -6,7 +6,7 @@ require 'logger'
 require_relative '../lib/gga_services'
 
 LOG = Logger.new('logs/bills_log.txt', 'weekly')
-LOG.level = Logger::INFO
+LOG.level = Logger::DEBUG
 LOG.info('START')
 
 ActiveRecord::Base.establish_connection(
@@ -34,6 +34,9 @@ end
 class BillsCommittee < ActiveRecord::Base
 end
 
+class Committee < ActiveRecord::Base
+end
+
 class Status < ActiveRecord::Base
   self.primary_key = "id"
 end
@@ -48,8 +51,12 @@ end
 class Vote < ActiveRecord::Base
 end
 
-# sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [23]
+class BillsVote < ActiveRecord::Base
+  validates :bill_id, uniqueness: { scope: :vote_id }
+end
+
+# sessions = [24,23,22,21,20,18,15,14,13,11,7,6,1]
+sessions = [24]
 house = {
   "HB" => "house",
   "HR" => "house",
@@ -67,7 +74,8 @@ sessions.each do |session|
   end
 
   bill_index.each do |bill|
-    next if bill[:id] == '5080'
+    # next if bill[:id] <= '5080'
+    LOG.debug bill[:id]
     bill['session_id'] = session
 
     # puts ""
@@ -81,7 +89,7 @@ sessions.each do |session|
       LOG.error error
     end
 
-    sleep(2)
+    sleep 2
     begin
       bill_detail = bill_service.get_legislation_detail( bill[:id] )
     rescue
@@ -154,16 +162,21 @@ sessions.each do |session|
         end
       end
 
-      # if committees
-      #   committees[:committee_listing].each do |c|
-      #     c[:committee_type] = c.delete(:type)
-      #     Committee.find_or_create_by(id: c[:id]).update(c)
+      if committees
+        if committees[:committee_listing].class == Hash
+          committees[:committee_listing] = [committees[:committee_listing]]
+        end
+        committees[:committee_listing].each do |c|
+          puts c
+          c[:committee_type] = c.delete(:type)
+          puts c
+          Committee.find_or_create_by(id: c[:id]).update(c)
 
-      #     c[:committee_id] = c.delete(:id)
-      #     c[:bill_id] = bill_detail[:id]
-      #     BillsCommittee.find_or_create_by(bill_id: bill_detail[:id], committee_type: c[:committee_type]).update(c)
-      #   end
-      # end
+          c[:committee_id] = c.delete(:id)
+          c[:bill_id] = bill_detail[:id]
+          BillsCommittee.find_or_create_by(bill_id: bill_detail[:id], committee_type: c[:committee_type]).update(c)
+        end
+      end
 
       if statusHistory
         statusHistory[:status_listing].each do |status|
@@ -204,21 +217,28 @@ sessions.each do |session|
       if votes
         votes[:vote_listing].each do |v|
           v[:id] = v.delete(:vote_id)
-          v[:bill_id] = bill_detail[:id]
+          # v[:bill_id] = bill_detail[:id]
           v[:vote_date] = v[:date].to_datetime.to_s
           v[:session_id] = v[:session][:id]
-          v[:title] = bill_detail[:caption]
+          # v[:title] = bill_detail[:caption]
           v.delete(:date)
           v.delete(:session)
           v.delete(:day)
           v.delete(:time)
 
-          begin
-            Vote.find_or_create_by(id: v[:id]).update(v)
-          rescue => error
-            LOG.error error
-          end
+        begin
+          Vote.find_or_create_by(id: v[:id]).update(v)
+        rescue => error
+          LOG.error error
         end
+
+        begin
+          newBillVote = BillsVote.new( bill_id: bill_detail[:id], vote_id: v[:id])
+          newBillVote.save if newBillVote.valid?
+        rescue => error
+          LOG.error error
+        end
+      end
       # end
     end
   end
@@ -232,21 +252,21 @@ else
   LOG.info("bills_attributes table created")
 end
 
-# begin
-#   ActiveRecord::Base.connection.execute('call archive_predictions()')
-# rescue => error
-#   LOG.error error
-# else
-#   LOG.info("predictions archived")
-# end
+begin
+  ActiveRecord::Base.connection.execute('call archive_predictions()')
+rescue => error
+  LOG.error error
+else
+  LOG.info("predictions archived")
+end
 
-# begin
-#   system("R CMD BATCH #{File.dirname(__FILE__)}/crossover_model_final.R")
-# rescue => error
-#   LOG.error error
-# else
-#   LOG.info("predictions calculated")
-# end
+begin
+  system("R CMD BATCH #{File.dirname(__FILE__)}/crossover_model_final.R")
+rescue => error
+  LOG.error error
+else
+  LOG.info("predictions calculated")
+end
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_bills()')
@@ -264,13 +284,13 @@ else
   LOG.info("bill_status_listings table successfully reloaded")
 end
 
-# begin
-#   ActiveRecord::Base.connection.execute('call gga.create_passed_table()')
-# rescue => error
-#   LOG.error error
-# else
-#   LOG.info("passed table successfully created")
-# end
+begin
+  ActiveRecord::Base.connection.execute('call gga.create_passed_table()')
+rescue => error
+  LOG.error error
+else
+  LOG.info("passed table successfully created")
+end
 
 begin
   ActiveRecord::Base.connection.execute('call gga.reload_versions()')

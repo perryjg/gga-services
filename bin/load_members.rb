@@ -4,14 +4,6 @@ require 'active_support/core_ext'
 require 'mysql2'
 require_relative '../lib/gga_services'
 
-# ActiveRecord::Base.establish_connection(
-#   adapter: "mysql2",
-#   host: "ajc-web.cgmwsizvte0i.us-east-1.rds.amazonaws.com",
-#   username: "newsappweb",
-#   password: "webat223",
-#   database: "gga_staging"
-# )
-
 ActiveRecord::Base.establish_connection(
   adapter: "mysql2",
   host: ENV["GGA_HOST"],
@@ -29,8 +21,8 @@ class LegislativeService < ActiveRecord::Base
 end
 
 member_service = GGAServices::Member.new
-# sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [23]
+# sessions = [24,23,22,21,20,18,15,14,13,11,7,6,1]
+sessions = [24]
 
 sessions.each do |session|
   puts ">>>>>>>>>SESSION: #{session}"
@@ -80,9 +72,10 @@ sessions.each do |session|
     member_detail.delete(:free_form2)
     member_detail.delete(:legislative_comments)
     member_detail.delete(:staff)
+    member_detail.delete(:residence)
     Member.find_or_create_by(id: member_detail[:id]).update(member_detail)
 
     sleep(1)
-    break
+    # break
   end
 end

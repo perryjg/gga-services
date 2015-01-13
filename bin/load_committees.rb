@@ -6,35 +6,35 @@ require_relative '../lib/gga_services'
 
 ActiveRecord::Base.establish_connection(
   adapter: "mysql2",
-  host: "ajc-intranet.cgmwsizvte0i.us-east-1.rds.amazonaws.com",
-  username: "ajcnews",
-  password: "KbZ776Pd",
-  database: "gga_staging"
+  host: ENV["GGA_HOST"],
+  username: ENV["GGA_USER"],
+  password: ENV["GGA_PASSWORD"],
+  database: ENV["GGA_DATABASE"]
 )
 
-sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
-# sessions = [18,14,11,1]
+sessions = [24,23,22,21,20,18,15,14,13,11,7,6,1]
+
+class Committee < ActiveRecord::Base
+  self.primary_key = 'id'
+end
+
+class MemberCommittee < ActiveRecord::Base
+end
+
+class SubCommittee < ActiveRecord::Base
+  self.primary_key = 'id'
+end
 
 sessions.each do |session|
-  class Committee < ActiveRecord::Base
-    self.primary_key = 'id'
-  end
-
-  class MemberCommittee < ActiveRecord::Base
-  end
-
-  class SubCommittee < ActiveRecord::Base
-    self.primary_key = 'id'
-  end
-
   committee_service = GGAServices::Committee.new
-  committee_list = committee_service.get_committees_by_session({session_id: 23}).body[:get_committees_by_session_response][:get_committees_by_session_result][:committee_listing]
+  committee_list = committee_service.get_committees_by_session({session_id: session}).body[:get_committees_by_session_response][:get_committees_by_session_result][:committee_listing]
 
   committee_list.each do |c|
+    sleep 2
     committee_detail = committee_service.get_committee_for_session({committee_id: c[:id], session_id: session}).body[:get_committee_for_session_response][:get_committee_for_session_result]
-    f = File.open('docs/comittee_detail.rb', 'w')
-    f.write(committee_detail)
-    f.close
+    # f = File.open('docs/comittee_detail.rb', 'w')
+    # f.write(committee_detail)
+    # f.close
 
     begin
       committee_detail[:session_id] = committee_detail.delete(:session)[:id]
@@ -67,10 +67,10 @@ sessions.each do |session|
         member_committee[:role] = m[:role]
         member_committee[:session_id] = session
 
-        puts ''
-        puts ">>>>>>>>>>>>>>>>>MemberCommittee<<<<<<<<<<<<<<<<"
-        p member_committee
-        puts ''
+        # puts ''
+        # puts ">>>>>>>>>>>>>>>>>MemberCommittee<<<<<<<<<<<<<<<<"
+        # p member_committee
+        # puts ''
 
         MemberCommittee.find_or_create_by(member_id: member_committee[:member_id],
                                           committee_id: member_committee[:committee_id],
@@ -89,10 +89,10 @@ sessions.each do |session|
     committee_detail.delete(:"@xmlns:a")
     committee_detail.delete(:"@xmlns:i")
 
-    puts ''
-    puts ">>>>>>>>>>>>>>>>>>>>>>COMMITTEE<<<<<<<<<<<<<<<<<"
-    p committee_detail
-    puts ''
+    # puts ''
+    # puts ">>>>>>>>>>>>>>>>>>>>>>COMMITTEE<<<<<<<<<<<<<<<<<"
+    # p committee_detail
+    # puts ''
     Committee.find_or_create_by(id: committee_detail[:id]).update(committee_detail)
   end
   sleep(2)
