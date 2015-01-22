@@ -122,7 +122,7 @@ training$majority_leadership_sponsor<-as.factor(training_frame$majority_leadersh
 training$majority_chairman_sponsor<-as.factor(training_frame$majority_chairman_sponsor)
 training$local_label<-as.factor(training_frame$local_label)
 training$floor_leader_sponsor<-as.factor(training_frame$floor_leader_sponsor)
-
+training$document_type<-as.factor(training_frame$document_type)
 
 
 dd<-datadist(training)
@@ -133,7 +133,8 @@ passed~
 rcs(days_from_may_submitted,7)+
 (rcs(majority_sponsors_cut,5)+
 rcs(minority_sponsors_cut,5)+
-summary_amend_cat)*
+summary_amend_cat+
+document_type)*
 local_label+
 author_category_chairs+
 rules_chair_sponsor+
