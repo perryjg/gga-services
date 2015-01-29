@@ -316,4 +316,12 @@ else
   LOG.info("watched_bills table successfully updated")
 end
 
+begin
+  ActiveRecord::Base.connection.execute('call gga.reload_days()')
+rescue => error
+  LOG.error error
+else
+  LOG.info("days table successfully updated")
+end
+
 LOG.info('STOP')
