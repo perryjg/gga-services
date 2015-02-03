@@ -17,7 +17,6 @@ ActiveRecord::Base.establish_connection(
 )
 
 class Version < ActiveRecord::Base
-  self.table_name = 'gga.versions'
 end
 
 versions = Version.where('dc_id is null')

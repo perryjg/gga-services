@@ -309,6 +309,14 @@ else
 end
 
 begin
+  ActiveRecord::Base.connection.execute('call gga.reload_votes')
+rescue => error
+  LOG.error error
+else
+  LOG.info("Vote data successfully reloaded")
+end
+
+begin
   ActiveRecord::Base.connection.execute('call gga.update_watched_bills()')
 rescue => error
   LOG.error error
