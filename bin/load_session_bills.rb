@@ -293,14 +293,6 @@ else
 end
 
 begin
-  ActiveRecord::Base.connection.execute('call gga.reload_versions()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("versions table successfully reloaded")
-end
-
-begin
   ActiveRecord::Base.connection.execute('call gga.reload_sponsorships()')
 rescue => error
   LOG.error error

@@ -51,5 +51,13 @@ versions.each do |version|
   end
 end
 
+begin
+  ActiveRecord::Base.connection.execute('call gga.reload_versions()')
+rescue => error
+  LOG.error error
+else
+  LOG.info("gga.versions table successfully reloaded")
+end
+
 LOG.info('STOP')
 ActiveRecord::Base.connection.close
