@@ -23,10 +23,12 @@ end
 
 class MemberVote < ActiveRecord::Base
   self.primary_key = "id"
+  validates :member_id, uniqueness: { scope: :vote_id }
 end
 
 begin
-  votes = Vote.where("vote_date >= '#{1.day.ago.to_date}'")
+  # votes = Vote.where("vote_date >= '#{1.day.ago.to_date}'")
+  votes = Vote.where("vote_date >= '2015-01-01'")
 rescue => error
   LOG.fatal error
   fail
@@ -53,7 +55,8 @@ if votes.length > 0
       member_vote[:member_id] = v[:member][:id]
       member_vote[:voted] = v[:member_voted]
 
-      MemberVote.create(member_vote)
+      new_member_vote = MemberVote.new(member_vote)
+      new_member_vote.save if new_member_vote.valid?
     end
   end
 

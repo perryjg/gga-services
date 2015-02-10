@@ -233,7 +233,13 @@ sessions.each do |session|
         end
 
         begin
-          newBillVote = BillsVote.new( bill_id: bill_detail[:id], vote_id: v[:id])
+          newBillVote = BillsVote.new(
+            bill_id: bill_detail[:id],
+            vote_id: v[:id],
+            document_type: bill_detail[:document_type],
+            number: bill_detail[:number],
+            caption: v[:caption]
+          )
           newBillVote.save if newBillVote.valid?
         rescue => error
           LOG.error error
