@@ -235,9 +235,7 @@ sessions.each do |session|
         begin
           newBillVote = BillsVote.new(
             bill_id: bill_detail[:id],
-            vote_id: v[:id],
-            document_type: bill_detail[:document_type],
-            number: bill_detail[:number]
+            vote_id: v[:id]
           )
           newBillVote.save if newBillVote.valid?
         rescue => error

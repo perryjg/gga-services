@@ -23,7 +23,8 @@ BEGIN
          b.caption,
          b.summary,
          b.bill_passed,
-       b.predictions
+       b.predictions,
+         b.passed_over
   from gga_staging.sponsorships s
   join gga.bills b
     on b.id = s.bill_id
@@ -32,4 +33,12 @@ BEGIN
 
   alter table gga.sponsorships
     add primary key (id);
+
+  update gga.sponsorships
+    set bill_passed = 0
+  where bill_passed is NULL;
+
+  update gga.sponsorships, gga.passed
+    set bill_passed = 1
+  where gga.sponsorships.bill_id = gga.passed.id;
 END

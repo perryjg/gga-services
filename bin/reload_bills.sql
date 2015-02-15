@@ -3,7 +3,7 @@ BEGIN
 
   create table gga.bills like gga_staging.bills;
 
-  alter table bills
+  alter table gga.bills
     add column bill_passed tinyint DEFAULT 0,
     add column predictions double;
 
@@ -12,5 +12,5 @@ BEGIN
   from gga_staging.bills a
   left join gga_staging.predictions b
     on a.id = b.bill_id
-  where a.session_id = 23;
+  where a.session_id = 24;
 END

@@ -1,24 +1,28 @@
+DElIMITER //
+
+DROP PROCEDURE IF EXISTS reload_votes//
+
+CREATE PROCEDURE reload_votes ()
 BEGIN
   drop table if exists gga.bills_votes;
 
   create table gga.bills_votes as
-    select * from gga_staging.bills_votes
-    where vote_id in (
-      select distinct vote_id
-      from gga_staging.votes
-      where session_id = 23
-  );
+    select @id:=@id+1 id, v.*,
+           b.document_type,
+           b.number
+    from gga_staging.bills_votes v
+    join gga_staging.bills b on v.bill_id = b.id
+    join (select @id:=0) t
+    where b.session_id = 24;
 
   alter table gga.bills_votes
-    add primary key (bill_id, vote_id);
+    add primary key (id);
 
-  drop table if exists gga.new_votes;
+  drop table if exists gga.votes;
 
-  create table gga.new_votes as
-    select a.id as vote_id,
+  create table gga.votes as
+    select a.id,
            a.legislation,
-           b.bill_id,
-           c.caption as title,
            a.branch,
            a.session_id,
            a.caption,
@@ -30,10 +34,10 @@ BEGIN
            a.nays,
            a.yeas
     from gga_staging.votes a
-    join gga_staging.bills_votes b on a.id = b.vote_id
-    join gga_staging.bills c on b.bill_id = c.id
-    where a.session_id = 23;
+    where a.session_id = 24;
 
-  alter table gga.new_votes
-    add column id int primary key auto_increment first;
-END
+  alter table gga.votes
+    add primary key (id);
+END//
+
+DELIMITER ;

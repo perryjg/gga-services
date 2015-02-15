@@ -12,7 +12,8 @@ ActiveRecord::Base.establish_connection(
   database: ENV["GGA_DATABASE"]
 )
 
-sessions = [24,23,22,21,20,18,15,14,13,11,7,6,1]
+# sessions = [24,23,22,21,20,18,15,14,13,11,7,6,1]
+sessions = [24]
 
 class Committee < ActiveRecord::Base
   self.primary_key = 'id'
