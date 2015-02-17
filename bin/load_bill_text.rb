@@ -25,7 +25,7 @@ class Text < ActiveRecord::Base
   self.primary_key = "version_id"
 end
 
-bills = Version.all.order(id: :desc).where("id > 145129")
+bills = Version.all.order(id: :desc).where("url like '20152016'")
 
 text_service = GGAServices::LegislationText.new
 

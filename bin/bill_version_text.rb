@@ -16,22 +16,50 @@ ActiveRecord::Base.establish_connection(
   database: ENV["GGA_DATABASE"]
 )
 
-class Version < ActiveRecord::Base
+class Bill < ActiveRecord::Base
+  has_many :versions
 end
 
-versions = Version.where('dc_id is null')
+class Version < ActiveRecord::Base
+  belongs_to :bill
+end
+
+versions = Version.where("dc_id is null")
 params = {
   source: 'Georgia General Assembly',
-  project: 17285,
+  project: 18221,
   access: 'public'
 }
 
 versions.each do |version|
   puts version.id
+  bill = version.bill
+
+  result = JSON.parse( RestClient.get("https://www.documentcloud.org/api/search.json?q=projectid:18221+version_id:#{version.id}&data=true") )
+  next if result["total"] > 0
+
+  result = JSON.parse( RestClient.get("https://www.documentcloud.org/api/search.json?q=projectid:18221+bill_id:#{version.bill_id}&data=true") )
+  if result["total"] > 0
+    LOG.debug("#{result["total"]} previous versions of bill #{bill["id"]} found")
+    result["documents"].each do |doc|
+      puts doc["id"]
+      data = doc["data"]
+      data["current"] = false
+
+      r = RestClient.put("https://John.Perry%40ajc.com:#{ENV["DC_PASS"]}@www.documentcloud.org/api/documents/#{doc["id"]}.json", {data: data})
+      LOG.debug("Update return code: #{r.code}")
+    end
+  end
+
   params[:file] = version.url
-  params[:title] = version.id
+  params[:title] = "#{bill.document_type} #{bill.number}"
   params[:description] = version.description
-  params[:data] = { version: version.version, bill_id: version.bill_id }
+  params[:data] = {
+    id: version.id,
+    version: version.version,
+    bill_id: version.bill_id,
+    current: true
+  }
 
   result = RestClient.post("https://John.Perry%40ajc.com:#{ENV["DC_PASS"]}@www.documentcloud.org/api/upload.json", params)
 
@@ -49,6 +77,7 @@ versions.each do |version|
   else
     LOG.error "HTTP error | bill_id: #{version.bill_id}, version_id: #{version.id}, error code: #{result.code}"
   end
+  sleep 1
 end
 
 begin
