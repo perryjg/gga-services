@@ -41,12 +41,12 @@ versions.each do |version|
   if result["total"] > 0
     LOG.debug("#{result["total"]} previous versions of bill #{bill["id"]} found")
     result["documents"].each do |doc|
-      puts doc["id"]["total"]
       data = doc["data"]
       data["current"] = false
 
       update_url = "https://John.Perry%40ajc.com:#{ENV["DC_PASS"]}@www.documentcloud.org/api/documents/#{doc["id"]}.json"
-      LOG.debug(update_url)
+      LOG.debug("Update request: #{update_url}")
+
       r = RestClient.put(update_url, {data: data})
       LOG.debug("Update return code: #{r.code}")
     end
