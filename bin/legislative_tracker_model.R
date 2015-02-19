@@ -48,7 +48,6 @@ testing <-testing[testing$status_date == max(testing$status_date),]
 #yeas_pass1_percent+
 #yeas_amend_percent+
 #crossed_over+
-#rcs(leg_days_since_last_status_granular,3)+
 #rcs(leg_days_since_last_status,3)*rcs(leg_days_remaining,3)*(out_comm1+out_comm2+pass1+amend)+
 #(out_comm1+out_comm2)*local_inferred*rcs(leg_days_remaining,3)+
 #(out_comm1+out_comm2)*local_inferred*rcs(leg_days_since_last_status,3),data=training[training$leg_day_status != 6,],x=T,y=T)
