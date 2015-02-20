@@ -9,16 +9,31 @@ gga_database<-Sys.getenv("GGA_DATABASE")
 con <-dbConnect(MySQL(), user = gga_user, password = gga_password, host = gga_host, dbname = gga_database)
 
 
-testing<-dbGetQuery(con,
+data<-dbGetQuery(con,
     "SELECT *,if((summary_city_of = 1 or summary_county_names=1),1,if(leg_day_status>2,1,0)) as crossed_over,
     if(leg_day_status>1,1,0) as out_comm1,
     if(leg_day_status>2,1,0) as pass1,
     if(leg_day_status>3,1,0) as out_comm2
     FROM bills_attributes_historical
-    WHERE session_id=24
     AND leg_day_status NOT IN (0,6)")
 
-testing <-testing[testing$status_date == max(testing$status_date),]
+testing <-data[data$status_date == max(testing$status_date),]
+
+
+
+#GET TRAINING DATA SET OF ONLY LIVE BILLS
+#training <- data[data$session_id in c(14,18,20,21,23),]
+
+#training_cross<-training[training$crossed_over == 1,]
+#training_cross<-training_cross[training_cross$leg_days_remaining < 11,]
+#training_cross<-training_cross[training_cross$leg_days_remaining > 0,]
+
+#training_non_cross<-training[training$leg_days_remaining > 10,]
+
+#training_combined<-rbind(training_cross,training_non_cross)
+#training_combined<-training_combined[training_combined$leg_day_status != 6,]
+#training_combined<-training_combined[training_combined$leg_day_status != 0,]
+
 
 
 #OUR MODEL SPECIFICATIONS
@@ -50,7 +65,7 @@ testing <-testing[testing$status_date == max(testing$status_date),]
 #crossed_over+
 #rcs(leg_days_since_last_status,3)*rcs(leg_days_remaining,3)*(out_comm1+out_comm2+pass1+amend)+
 #(out_comm1+out_comm2)*local_inferred*rcs(leg_days_remaining,3)+
-#(out_comm1+out_comm2)*local_inferred*rcs(leg_days_since_last_status,3),data=training[training$leg_day_status != 6,],x=T,y=T)
+#(out_comm1+out_comm2)*local_inferred*rcs(leg_days_since_last_status,3),data=training_combined,x=T,y=T)
 
 #Import saved model
 load(paste(getwd(),"/gga-services/bin/legislative_model.rda", sep=""))
