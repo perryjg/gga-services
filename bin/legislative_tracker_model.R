@@ -15,9 +15,9 @@ data<-dbGetQuery(con,
     if(leg_day_status>2,1,0) as pass1,
     if(leg_day_status>3,1,0) as out_comm2
     FROM bills_attributes_historical
-    AND leg_day_status NOT IN (0,6)")
+    WHERE leg_day_status NOT IN (0,6)")
 
-testing <-data[data$status_date == max(testing$status_date),]
+testing <-data[data$status_date == max(data$status_date),]
 
 
 
