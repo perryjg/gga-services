@@ -34,9 +34,11 @@ params = {
 versions.each do |version|
   bill = version.bill
 
+  LOG.debug("Checking for existing bill version #{version.id}")
   result = JSON.parse( RestClient.get("https://www.documentcloud.org/api/search.json?q=projectid:18221+version_id:#{version.id}&data=true") )
   next if result["total"] > 0
 
+  LOG.debug("Checking for previous versions of bill #{version.bill_id}")
   result = JSON.parse( RestClient.get("https://www.documentcloud.org/api/search.json?q=projectid:18221+bill_id:#{version.bill_id}&data=true") )
   if result["total"] > 0
     LOG.debug("#{result["total"]} previous versions of bill #{bill["id"]} found")
@@ -45,7 +47,7 @@ versions.each do |version|
       data["current"] = false
 
       update_url = "https://John.Perry%40ajc.com:#{ENV["DC_PASS"]}@www.documentcloud.org/api/documents/#{doc["id"]}.json"
-      LOG.debug("Update request: #{update_url}")
+      LOG.debug("Sending update request: #{update_url}")
 
       r = RestClient.put(update_url, {data: data})
       LOG.debug("Update return code: #{r.code}")
