@@ -13,7 +13,8 @@ data<-dbGetQuery(con,
     "SELECT *,if((summary_city_of = 1 or summary_county_names=1),1,if(leg_day_status>2,1,0)) as crossed_over,
     if(leg_day_status>1,1,0) as out_comm1,
     if(leg_day_status>2,1,0) as pass1,
-    if(leg_day_status>3,1,0) as out_comm2
+    if(leg_day_status>3,1,0) as out_comm2,
+    if(leg_day_status>4,1,0) as amend
     FROM bills_attributes_historical
     WHERE leg_day_status NOT IN (0,6)")
 
