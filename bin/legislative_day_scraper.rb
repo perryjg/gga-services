@@ -62,6 +62,14 @@ items.each do |select|
   end
 end
 
+begin
+  ActiveRecord::Base.connection.execute('call gga.reload_days()')
+rescue => error
+  LOG.error error
+else
+  LOG.info("days table successfully updated")
+end
+
 today = Time.now.strftime('%Y-%m-%d')
 legislative_day = LegislativeDay.find_by legislative_day_date: today
 LOG.info "#{40 - legislative_day.id} days left in session"

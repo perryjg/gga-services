@@ -5,7 +5,7 @@ require 'logger'
 require 'rest_client'
 
 LOG = Logger.new('logs/versions_log.txt', 'weekly')
-LOG.level = Logger::INFO
+LOG.level = Logger::DEBUG
 LOG.info('START')
 
 ActiveRecord::Base.establish_connection(
@@ -67,16 +67,17 @@ versions.each do |version|
   result = RestClient.post("https://John.Perry%40ajc.com:#{ENV["DC_PASS"]}@www.documentcloud.org/api/upload.json", params)
 
   if result.code == 200
+    LOG.info "Uploaded bill version #{version.id} to #{version.dc_id}"
     result_data = JSON.parse(result)
     version.dc_id = result_data["id"]
     version.dc_url = result_data["canonical_url"]
 
     begin
-      version.save
+      v = version.save
+      LOG.debus("Version #{version.id} update result: #{v}")
     rescue => error
       LOG.error error
     end
-    LOG.info "Uploaded bill version #{version.id} to #{version.dc_id}"
   else
     LOG.error "HTTP error | bill_id: #{version.bill_id}, version_id: #{version.id}, error code: #{result.code}"
   end
