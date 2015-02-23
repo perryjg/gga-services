@@ -1299,7 +1299,7 @@ JOIN bills_attributes_historical bah2
 ON bah1.bill_id=bah2.bill_id
 AND bah1.`leg_day_status_granular`=bah2.`leg_day_status_granular`
 WHERE bah1.`session_id` >= 14 
-AND bah1.status_date=>bah2.status_date
+AND bah1.status_date>=bah2.status_date
 GROUP BY 1,2,3) t
 
 SET a.leg_days_since_last_status_granular=t.leg_days_since_last_status_granular
