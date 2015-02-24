@@ -18,6 +18,7 @@ ActiveRecord::Base.establish_connection(
 )
 
 class Version < ActiveRecord::Base
+  self.primary_key = "id"
 end
 
 class Text < ActiveRecord::Base
@@ -25,28 +26,27 @@ class Text < ActiveRecord::Base
   self.primary_key = "version_id"
 end
 
-bills = Version.all.order(id: :desc).where("url like '20152016'")
+versions = Version.all.order(id: :desc).where("url like '%20152016%'")
 
 text_service = GGAServices::LegislationText.new
 
-bills.each do |bill|
+versions.each do |version|
   begin
-    text = text_service.get_legislation_text(bill.id)
+    text = text_service.get_legislation_text(version.id)
   rescue
-    LOG.error("Version No.: #{bill.id}")
+    LOG.error("Version No. #{version.id}")
   end
 
-  puts text
-  LOG.info("Bill: #{bill.bill_id}")
-  LOG.info("Version: #{bill.id}")
-  LOG.info("URL: #{bill.url}")
+  LOG.info("Bill: #{version.bill_id}")
+  LOG.info("Version: #{version.id}")
+  LOG.info("URL: #{version.url}")
   LOG.info("")
-  text = Text.new(
-    version_id: bill.id,
-    bill_id: bill.bill_id,
-    url: bill.url,
+  data = {
+    version_id: version.id,
+    bill_id: version.bill_id,
+    url: version.url,
     text: text
-  )
-  text.save
+  }
+  Text.find_or_create_by(version_id: version.id).update(data)
   sleep(1)
 end
