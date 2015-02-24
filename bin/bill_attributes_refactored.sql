@@ -4,9 +4,10 @@ SET default_storage_engine=MYISAM;
 INSERT INTO legislative_days_historical 
 SELECT YEAR(legislative_day_date) AS leg_year_submitted,legislative_day_date AS status_date,'1' AS on_calendar,id AS leg_day,40-id AS leg_day_remaining
 FROM legislative_days ld
-LEFT JOIN legislative_days_historical ldj
-ON ld.legislative_day_date=ldj.status_date
-WHERE ldj.status_date IS NULL;
+LEFT JOIN legislative_days_historical ldh
+ON ld.legislative_day_date=ldh.status_date
+WHERE ldh.status_date IS NULL
+AND ld.legislative_day_date<CURDATE();
 
   
   

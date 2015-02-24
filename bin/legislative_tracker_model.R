@@ -14,7 +14,8 @@ data<-dbGetQuery(con,
     if(leg_day_status>1,1,0) as out_comm1,
     if(leg_day_status>2,1,0) as pass1,
     if(leg_day_status>3,1,0) as out_comm2,
-    if(leg_day_status>4,1,0) as amend
+    if(leg_day_status>4,1,0) as amend,
+    CURDATE() as prediction_date
     FROM bills_attributes_historical
     WHERE leg_day_status NOT IN (0,6)")
 
@@ -71,20 +72,20 @@ testing <-data[data$status_date == max(data$status_date),]
 #Import saved model
 load(paste(getwd(),"/gga-services/bin/legislative_model.rda", sep=""))
 
-#get CIs
-pred.logit.f <- predict(f,testing,se.fit=TRUE)
-f.ci<-plogis(with(pred.logit.f,linear.predictors + 1.96*cbind(-se.fit,se.fit)))
-
-
+#Write predictions to MySQL server
 id<-rownames(testing)
 results <- data.frame(id)
 results$bill_id<-testing$bill_id
 results$bill_passed<-testing$passed_year_submitted
+results$prediction_date<-testing$prediction_date
+results$legislative_day_date<-testing$status_date
+results$legislative_days_remaining<-testing$leg_days_remaining
+results$legislative_status<-testing$leg_day_status
 results$prediction<-predict(f,testing,type="fitted")
-results$upper<-f.ci[,2]
-results$lower<-f.ci[,1]
 
 
 
-dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction="double",upper="double",lower="double"), row.names=FALSE)
+
+dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction_date="date",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
+dbWriteTable(con,name = "predictions_history",value=results, overwrite = FALSE,append=TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction_date="date",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
 
