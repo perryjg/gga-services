@@ -14,7 +14,8 @@ data<-dbGetQuery(con,
     if(leg_day_status>1,1,0) as out_comm1,
     if(leg_day_status>2,1,0) as pass1,
     if(leg_day_status>3,1,0) as out_comm2,
-    if(leg_day_status>4,1,0) as amend
+    if(leg_day_status>4,1,0) as amend,
+    CURDATE() as prediction_date
     FROM bills_attributes_historical
     WHERE leg_day_status NOT IN (0,6)")
 
@@ -76,6 +77,7 @@ id<-rownames(testing)
 results <- data.frame(id)
 results$bill_id<-testing$bill_id
 results$bill_passed<-testing$passed_year_submitted
+results$prediction_date<-testing$prediction_date
 results$legislative_day_date<-testing$status_date
 results$legislative_days_remaining<-testing$leg_days_remaining
 results$legislative_status<-testing$leg_day_status
@@ -84,5 +86,6 @@ results$prediction<-predict(f,testing,type="fitted")
 
 
 
-dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
+dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction_date="date",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
+dbWriteTable(con,name = "predictions_history",value=results, overwrite = FALSE,append=TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction_date="date",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
 
