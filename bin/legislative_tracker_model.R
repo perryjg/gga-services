@@ -88,7 +88,22 @@ results$prediction<-predict(f,testing,type="fitted")
 results[results$bill_id==42877,]$prediction<-1
 
 
-
 dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction_date="date",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
-dbWriteTable(con,name = "predictions_history",value=results, overwrite = FALSE,append=TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction_date="date",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
+
+
+
+#looping over the predictions and injecting them with timestamp as ID
+
+rows<-nrow(results)
+cols<-ncol(results)
+
+for (i in seq(1,rows,1)){
+    record_statement<-paste(sep="","INSERT IGNORE INTO predictions_history VALUES(CONCAT('",results[i,]$bill_id,"',UNIX_TIMESTAMP('",results[i,]$legislative_day_date,"'),UNIX_TIMESTAMP('",results[i,]$prediction_date,"'))")
+    for (j in seq(2,cols,1)){
+        record_statement<-paste(sep="",record_statement,",'",results[i,][j],"'")
+    }
+    record_statement<-paste(record_statement,")")
+    #print(record_statement)
+    dbSendQuery(con,record_statement)
+}
 
