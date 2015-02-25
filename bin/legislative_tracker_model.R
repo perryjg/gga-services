@@ -84,6 +84,9 @@ results$legislative_status<-testing$leg_day_status
 results$prediction<-predict(f,testing,type="fitted")
 
 
+#fix prediction for budget at 1
+results[results$bill_id==42877,]$prediction<-1
+
 
 
 dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction_date="date",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
