@@ -10,11 +10,19 @@ LOG.info('START')
 
 ActiveRecord::Base.establish_connection(
   adapter: "mysql2",
-  host: ENV["GGA_HOST"],
-  username: ENV["GGA_USER"],
-  password: ENV["GGA_PASSWORD"],
-  database: ENV["GGA_DATABASE"]
+  host: "ajc-web.cgmwsizvte0i.us-east-1.rds.amazonaws.com",
+  username: "ggaservice",
+  password: "serviceat223",
+  database: "gga_staging"
 )
+
+# ActiveRecord::Base.establish_connection(
+#   adapter: "mysql2",
+#   host: ENV["GGA_HOST"],
+#   username: ENV["GGA_USER"],
+#   password: ENV["GGA_PASSWORD"],
+#   database: ENV["GGA_DATABASE"]
+# )
 
 class Bill < ActiveRecord::Base
   has_many :versions
