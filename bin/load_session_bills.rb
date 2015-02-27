@@ -255,68 +255,68 @@ else
   LOG.info("bills_attributes table created")
 end
 
-begin
-  ActiveRecord::Base.connection.execute('call archive_predictions()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("predictions archived")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call archive_predictions()')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("predictions archived")
+# end
 
-begin
-  system("R CMD BATCH #{File.dirname(__FILE__)}/legislative_tracker_model.R")
-rescue => error
-  LOG.error error
-else
-  LOG.info("predictions calculated")
-end
+# begin
+#   system("R CMD BATCH #{File.dirname(__FILE__)}/legislative_tracker_model.R")
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("predictions calculated")
+# end
 
-begin
-  ActiveRecord::Base.connection.execute('call gga.reload_bills()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("bills table successfully reloaded")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call gga.reload_bills()')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("bills table successfully reloaded")
+# end
 
-begin
-  ActiveRecord::Base.connection.execute('call gga.reload_bill_status_listings()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("bill_status_listings table successfully reloaded")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call gga.reload_bill_status_listings()')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("bill_status_listings table successfully reloaded")
+# end
 
-begin
-  ActiveRecord::Base.connection.execute('call gga.create_passed_table()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("passed table successfully created")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call gga.create_passed_table()')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("passed table successfully created")
+# end
 
-begin
-  ActiveRecord::Base.connection.execute('call gga.reload_sponsorships()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("sponsorships table successfully reloaded")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call gga.reload_sponsorships()')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("sponsorships table successfully reloaded")
+# end
 
-begin
-  ActiveRecord::Base.connection.execute('call gga.reload_votes')
-rescue => error
-  LOG.error error
-else
-  LOG.info("Vote data successfully reloaded")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call gga.reload_votes')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("Vote data successfully reloaded")
+# end
 
-begin
-  ActiveRecord::Base.connection.execute('call gga.update_watched_bills()')
-rescue => error
-  LOG.error error
-else
-  LOG.info("watched_bills table successfully updated")
-end
+# begin
+#   ActiveRecord::Base.connection.execute('call gga.update_watched_bills()')
+# rescue => error
+#   LOG.error error
+# else
+#   LOG.info("watched_bills table successfully updated")
+# end
 
 LOG.info('STOP')
