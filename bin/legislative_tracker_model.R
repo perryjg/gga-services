@@ -1,5 +1,10 @@
 library(RMySQL)
 library(rms)
+library(log4r)
+
+logger <- create.logger()
+logfile(logger) <- 'logs/model.log'
+level(logger) <- 'DEBUG'
 
 gga_host<-Sys.getenv("GGA_HOST")
 gga_user<-Sys.getenv("GGA_USER")
@@ -7,7 +12,7 @@ gga_password<-Sys.getenv("GGA_PASSWORD")
 gga_database<-Sys.getenv("GGA_DATABASE")
 
 con <-dbConnect(MySQL(), user = gga_user, password = gga_password, host = gga_host, dbname = gga_database)
-
+debug(logger, "DB connection successful")
 
 data<-dbGetQuery(con,
     "SELECT *,if((summary_city_of = 1 or summary_county_names=1),1,if(leg_day_status>2,1,0)) as crossed_over,
@@ -47,16 +52,16 @@ testing <-data[data$status_date == max(data$status_date),]
 #rcs(minority_sponsors_cut, 3) +
 #summary_amend_cat +
 #leg_election_year +
-#document_type + 
+#document_type +
 #author_category_chairs +
 #rules_chair_sponsor +
-#chamber_leader_sponsor + 
+#chamber_leader_sponsor +
 #submitted +
 #out_comm1 +
 #out_comm2 +
 #rcs(yeas_pass1_percent,3) +
 #yeas_amend_percent +
-#floor_leader_sponsors + 
+#floor_leader_sponsors +
 #rcs(leg_days_since_last_status,4) +
 #rcs(leg_days_remaining,10)) *
 #local_inferred +
@@ -65,7 +70,7 @@ testing <-data[data$status_date == max(data$status_date),]
 #rcs(leg_days_remaining,10))+
 #minority_leader_sponsor +
 #rcs(majority_caucus_leadership_sponsors, 4) +
-#majority_chairman_sponsor + 
+#majority_chairman_sponsor +
 #summary_tax +
 #summary_social +
 #summary_health +
@@ -74,6 +79,7 @@ testing <-data[data$status_date == max(data$status_date),]
 
 #Import saved model
 load(paste(getwd(),"/gga-services/bin/legislative_model.rda", sep=""))
+debug(logger, "Model loaded")
 
 #Write predictions to MySQL server
 id<-rownames(testing)
@@ -109,4 +115,6 @@ for (i in seq(1,rows,1)){
     #print(record_statement)
     dbSendQuery(con,record_statement)
 }
+debug(logger, "Predictions archived")
+
 
