@@ -11,10 +11,11 @@ con <-dbConnect(MySQL(), user = gga_user, password = gga_password, host = gga_ho
 
 data<-dbGetQuery(con,
     "SELECT *,if((summary_city_of = 1 or summary_county_names=1),1,if(leg_day_status>2,1,0)) as crossed_over,
-    if(leg_day_status>1,1,0) as out_comm1,
-    if(leg_day_status>2,1,0) as pass1,
-    if(leg_day_status>3,1,0) as out_comm2,
-    if(leg_day_status>4,1,0) as amend,
+    if(leg_day_status=1,1,0) as submitted,
+    if(leg_day_status=2,1,0) as out_comm1,
+    if(leg_day_status=3,1,0) as pass1,
+    if(leg_day_status=4,1,0) as out_comm2,
+    if(leg_day_status=5,1,0) as amend,
     CURDATE() as prediction_date
     FROM bills_attributes_historical
     WHERE leg_day_status NOT IN (0,6)")
@@ -40,34 +41,36 @@ testing <-data[data$status_date == max(data$status_date),]
 
 #OUR MODEL SPECIFICATIONS
 #f<-lrm(
-#passed_year_submitted~
-#(rcs(days_from_may_submitted,5)+
-#rcs(majority_sponsors_cut,6)+
-#rcs(minority_sponsors_cut,6)+
-#summary_amend_cat+
-#leg_election_year+
-#bi_partisan_sponsorship+
-#document_type+
-#author_category_chairs+
-#rules_chair_sponsor+
-#chamber_leader_sponsor
-#)*
-#local_inferred*
-#rcs(leg_days_remaining,3)+
-#floor_leader_sponsor+
-#minority_leader_sponsor+
-#majority_leadership_sponsor+
-#majority_chairman_sponsor+
-#summary_tax+
-#summary_social+
-#summary_health+
-#summary_new_charter+
-#yeas_pass1_percent+
-#yeas_amend_percent+
-#crossed_over+
-#rcs(leg_days_since_last_status,3)*rcs(leg_days_remaining,3)*(out_comm1+out_comm2+pass1+amend)+
-#(out_comm1+out_comm2)*local_inferred*rcs(leg_days_remaining,3)+
-#(out_comm1+out_comm2)*local_inferred*rcs(leg_days_since_last_status,3),data=training_combined,x=T,y=T)
+#passed_year_submitted ~
+#(rcs(leg_days_remaining_submitted,5) +
+#rcs(majority_sponsors_cut, 3) *
+#rcs(minority_sponsors_cut, 3) +
+#summary_amend_cat +
+#leg_election_year +
+#document_type + 
+#author_category_chairs +
+#rules_chair_sponsor +
+#chamber_leader_sponsor + 
+#submitted +
+#out_comm1 +
+#out_comm2 +
+#rcs(yeas_pass1_percent,3) +
+#yeas_amend_percent +
+#floor_leader_sponsors + 
+#rcs(leg_days_since_last_status,4) +
+#rcs(leg_days_remaining,10)) *
+#local_inferred +
+#rcs(yeas_pass1_percent,3)*
+#(rcs(leg_days_since_last_status,4) +
+#rcs(leg_days_remaining,10))+
+#minority_leader_sponsor +
+#rcs(majority_caucus_leadership_sponsors, 4) +
+#majority_chairman_sponsor + 
+#summary_tax +
+#summary_social +
+#summary_health +
+#rcs(nays_pass1_percent,3),
+#data = training_combined, x = T, y = T)
 
 #Import saved model
 load(paste(getwd(),"/gga-services/bin/legislative_model.rda", sep=""))

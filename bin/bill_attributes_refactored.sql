@@ -48,7 +48,7 @@ AND ld.legislative_day_date<CURDATE();
 
   WHERE a.document_type IN ('HB','SB')
     AND b.code <> 'EFF'
-    AND a.session_id IN (1,11,14,18,20,21,23,24)/* Regular sessions */
+    AND a.session_id IN (14,18,20,21,23,24)/* Regular sessions, single party rule */
 
   GROUP BY a.id, a.session_id, a.document_type, a.number;
 
@@ -61,22 +61,14 @@ AND ld.legislative_day_date<CURDATE();
   ADD COLUMN gov_party INT,
   ADD COLUMN chamber_leader_sponsor INT,
   ADD COLUMN chamber_leader_author INT,
-  ADD COLUMN leadership_author_republican INT,
-  ADD COLUMN leadership_sponsors_republican INT,
-  ADD COLUMN leadership_author_democrat INT,
-  ADD COLUMN leadership_sponsors_democrat INT,
   ADD COLUMN other_sponsors_democrat INT,
   ADD COLUMN other_sponsors_republican INT,
   ADD COLUMN other_minority_sponsors INT,
   ADD COLUMN other_majority_sponsors INT,
   ADD COLUMN floor_leader_author INT,
   ADD COLUMN floor_leader_sponsors INT,
-  ADD COLUMN other_leadership_sponsors_republican INT,
-  ADD COLUMN other_leadership_sponsors_democrat INT,
-  ADD COLUMN other_majority_leadership_sponsors INT,
-  ADD COLUMN other_minority_leadership_sponsors INT,
-  ADD COLUMN majority_leadership_author INT,
-  ADD COLUMN majority_leadership_sponsors INT,
+  ADD COLUMN majority_caucus_leadership_author INT,
+  ADD COLUMN majority_caucus_leadership_sponsors INT,
   ADD COLUMN minority_leadership_author INT,
   ADD COLUMN minority_leadership_sponsors INT,
   ADD COLUMN majority_sponsors INT,
@@ -122,7 +114,17 @@ AND ld.legislative_day_date<CURDATE();
   ADD COLUMN independent_chairman_author INT,
   ADD COLUMN majority_chairman_author INT,
   ADD COLUMN minority_chairman_author INT,
-  ADD COLUMN days_from_may_submitted INT;
+  ADD COLUMN days_from_may_submitted INT,
+  ADD COLUMN majority_caucus_whip_author INT,
+  ADD COLUMN majority_caucus_whip_sponsor INT,
+  ADD COLUMN majority_caucus_leader_author INT,
+  ADD COLUMN majority_caucus_leader_sponsor INT,
+  ADD COLUMN majority_caucus_chairman_author INT,
+  ADD COLUMN majority_caucus_chairman_sponsor INT,
+  ADD COLUMN majority_caucus_vice_chairman_author INT,
+  ADD COLUMN majority_caucus_vice_chairman_sponsor INT,
+  ADD COLUMN majority_caucus_treas_sec_author INT,
+  ADD COLUMN majority_caucus_treas_sec_sponsor INT;
 
 
 
@@ -169,17 +171,7 @@ AND ld.legislative_day_date<CURDATE();
     SUM(IF(l.party = 'Democrat' AND sequence<>1,1,0)) AS sponsors_democrat,
     SUM(IF(l.district_type = 'House' AND sequence<>1,1,0)) AS sponsors_house,
     SUM(IF(l.district_type = 'Senate' AND sequence<>1,1,0)) AS sponsors_senate,
-    SUM(IF(l.title IN ('President Pro Tempore','Speaker House of Representatives') AND sequence = 1, 1, 0 )) AS chamber_leader_author,
-    SUM(IF(l.title IN ('President Pro Tempore','Speaker House of Representatives') AND sequence <>1, 1, 0 )) AS chamber_leader_sponsor,
-    SUM(IF(l.title IS NOT NULL AND sequence = '1' AND party='Republican' AND l.title NOT LIKE '%floor%',1,0)) AS leadership_author_republican,
-    SUM(IF(l.title IS NOT NULL AND sequence = '1' AND party='Democrat' AND l.title NOT LIKE '%floor%',1,0)) AS leadership_author_democrat,
           SUM(IF(sequence = '1' AND party NOT IN ('Democrat','Republican'),1,0)) AS author_independent,
-    SUM(IF(l.title LIKE '% floor %' AND sequence = 1,1,0)) AS floor_leader_author,
-    SUM(IF(l.title LIKE '% floor %' AND sequence <>1,1,0)) AS floor_leader_sponsors,
-          SUM(IF(l.title IS NOT NULL AND party = 'Republican' AND sequence <> 1,1,0)) AS leadership_sponsors_republican,
-          SUM(IF(l.title IS NOT NULL AND party = 'Democrat' AND sequence <> 1,1,0)) AS leadership_sponsors_democrat,
-    SUM(IF(l.title IS NOT NULL AND l.title NOT IN ('President Pro Tempore','Speaker House of Representatives') AND l.title NOT LIKE '% floor %' AND sequence<>1 AND party = 'Republican',1,0)) AS other_leadership_sponsors_republican,
-    SUM(IF(l.title IS NOT NULL AND l.title NOT IN ('President Pro Tempore','Speaker House of Representatives') AND l.title NOT LIKE '% floor %' AND sequence<>1 AND party = 'Democrat',1,0)) AS other_leadership_sponsors_democrat,
     SUM(IF(l.title IS NULL AND sequence<>'1' AND party = 'Republican',1,0)) AS other_sponsors_republican,
     SUM(IF(l.title IS NULL AND sequence<>'1' AND party = 'Democrat',1,0)) AS other_sponsors_democrat,
           SUM(IF(sequence<>'1' AND party NOT IN ('Democrat','Republican'),1,0)) AS sponsors_independent
@@ -198,21 +190,11 @@ AND ld.legislative_day_date<CURDATE();
   GROUP BY bill_id
   ) t
   SET a.author_party=t.author_party,
-      a.chamber_leader_sponsor = t.chamber_leader_sponsor,
-      a.chamber_leader_author = t.chamber_leader_author,
-      a.leadership_author_republican=t.leadership_author_republican,
-      a.leadership_sponsors_republican=t.leadership_sponsors_republican,
-      a.leadership_author_democrat=t.leadership_author_democrat,
-      a.leadership_sponsors_democrat=t.leadership_sponsors_democrat,
       a.sponsors = t.sponsors,
       a.sponsors_republican = t.sponsors_republican,
       a.sponsors_democrat = t.sponsors_democrat,
       a.sponsors_house = t.sponsors_house,
       a.sponsors_senate = t.sponsors_senate,
-      a.floor_leader_author=t.floor_leader_author,
-      a.floor_leader_sponsors=t.floor_leader_sponsors,
-      a.other_leadership_sponsors_democrat=t.other_leadership_sponsors_democrat,
-      a.other_leadership_sponsors_republican=t.other_leadership_sponsors_republican,
       a.other_sponsors_democrat=t.other_sponsors_democrat,
       a.other_sponsors_republican=t.other_sponsors_republican,
       a.author_independent=t.author_independent,
@@ -231,12 +213,6 @@ AND ld.legislative_day_date<CURDATE();
       IF(sponsors_republican>0 AND sponsors_democrat>0,1,0) AS bi_partisan_sponsorship,
       IF(majority_party_senate=majority_party_house AND majority_party_senate=gov_party,1,0) AS single_party_rule,
       IF(author_party=majority_party,1,0) AS majority_party_author,
-      IF(majority_party=1,leadership_author_republican,leadership_author_democrat) AS majority_leadership_author,
-      IF(majority_party=1,leadership_sponsors_republican,leadership_sponsors_democrat) AS majority_leadership_sponsors,
-      IF(majority_party=0,leadership_author_republican,leadership_author_democrat) AS minority_leadership_author,
-      IF(majority_party=0,leadership_sponsors_republican,leadership_sponsors_democrat) AS minority_leadership_sponsors,
-      IF(majority_party=1,other_leadership_sponsors_republican,other_leadership_sponsors_democrat) AS other_majority_leadership_sponsors,
-      IF(majority_party=0,other_leadership_sponsors_republican,other_leadership_sponsors_democrat) AS other_minority_leadership_sponsors,
       IF(majority_party=1,other_sponsors_republican,other_sponsors_democrat) AS other_majority_sponsors,
       IF(majority_party=0,other_sponsors_republican,other_sponsors_democrat) AS other_minority_sponsors,
       IF(majority_party=1,sponsors_republican,sponsors_democrat) AS majority_sponsors,
@@ -253,12 +229,6 @@ AND ld.legislative_day_date<CURDATE();
       a.bi_partisan_sponsorship=t.bi_partisan_sponsorship,
       a.single_party_rule=t.single_party_rule,
       a.majority_party_author=t.majority_party_author,
-      a.majority_leadership_author=t.majority_leadership_author,
-      a.minority_leadership_author=t.minority_leadership_author,
-      a.majority_leadership_sponsors=t.majority_leadership_sponsors,
-      a.minority_leadership_sponsors=t.minority_leadership_sponsors,
-      a.other_majority_leadership_sponsors=t.other_majority_leadership_sponsors,
-      a.other_minority_leadership_sponsors=t.other_minority_leadership_sponsors,
       a.other_majority_sponsors=t.other_majority_sponsors,
       a.other_minority_sponsors=t.other_minority_sponsors,
       a.majority_sponsors=t.majority_sponsors,
@@ -278,10 +248,22 @@ AND ld.legislative_day_date<CURDATE();
   SUM(IF(sl.sequence=1 AND sl.body IN ('minority'),1,0)) AS minority_leader_author,
   SUM(IF(sl.sequence<>1 AND sl.body IN ('minority'),1,0)) AS minority_leader_sponsor,
   SUM(IF(sl.sequence=1 AND sl.body IN ('floor'),1,0)) AS floor_leader_author,
-  SUM(IF(sl.sequence<>1 AND sl.body IN ('floor'),1,0)) AS floor_leader_sponsors
+  SUM(IF(sl.sequence<>1 AND sl.body IN ('floor'),1,0)) AS floor_leader_sponsors,
+  SUM(IF(sl.sequence=1 AND sl.body IN ('majority') and sl.role IN ('leader','speaker pro tem'),1,0)) AS majority_caucus_leader_author,
+  SUM(IF(sl.sequence<>1 AND sl.body IN ('majority') and sl.role IN ('leader','speaker pro tem'),1,0)) AS majority_caucus_leader_sponsor,
+  SUM(IF(sl.sequence=1 AND sl.body IN ('majority') and sl.role IN ('chairman'),1,0)) AS majority_caucus_chairman_author,
+  SUM(IF(sl.sequence<>1 AND sl.body IN ('majority') and sl.role IN ('chairman'),1,0)) AS majority_caucus_chairman_sponsor,
+  SUM(IF(sl.sequence=1 AND sl.body IN ('majority') and sl.role IN ('vice chairman'),1,0)) AS majority_caucus_vice_chairman_author,
+  SUM(IF(sl.sequence<>1 AND sl.body IN ('majority') and sl.role IN ('vice chairman'),1,0)) AS majority_caucus_vice_chairman_sponsor,
+  SUM(IF(sl.sequence=1 AND sl.body IN ('majority') and sl.role IN ('whip'),1,0)) AS majority_caucus_whip_author,
+  SUM(IF(sl.sequence<>1 AND sl.body IN ('majority') and sl.role IN ('whip'),1,0)) AS majority_caucus_whip_sponsor,
+  SUM(IF(sl.sequence=1 AND sl.body IN ('majority') and sl.role IN ('treasurer','secretary'),1,0)) AS majority_caucus_treas_sec_author,
+  SUM(IF(sl.sequence<>1 AND sl.body IN ('majority') and sl.role IN ('treasurer','secretary'),1,0)) AS majority_caucus_treas_sec_sponsor,  
+  SUM(IF(sl.sequence=1 AND sl.body IN ('majority'),1,0)) AS majority_caucus_leadership_author,
+  SUM(IF(sl.sequence<>1 AND sl.body IN ('majority'),1,0)) AS majority_caucus_leadership_sponsors
   FROM bills_attributes AS b
   LEFT JOIN
-  (SELECT l.leg_year_submitted, l.body, s.*
+  (SELECT l.leg_year_submitted, l.body, l.role, s.*
   FROM sponsorships s
   JOIN leadership_roles_by_year l
   ON s.member_id=l.member_id) AS sl
@@ -296,8 +278,19 @@ AND ld.legislative_day_date<CURDATE();
     a.minority_leader_author=t.minority_leader_author,
     a.minority_leader_sponsor=t.minority_leader_sponsor,
     a.floor_leader_author=t.floor_leader_author,
-    a.floor_leader_sponsors=t.floor_leader_sponsors
-
+    a.floor_leader_sponsors=t.floor_leader_sponsors,
+    a.majority_caucus_leadership_author=t.majority_caucus_leadership_author,
+    a.majority_caucus_leadership_sponsors=t.majority_caucus_leadership_sponsors,
+    a.majority_caucus_leader_author=t.majority_caucus_leader_author,
+    a.majority_caucus_leader_sponsor=t.majority_caucus_leader_sponsor,   
+    a.majority_caucus_chairman_author=t.majority_caucus_chairman_author,
+    a.majority_caucus_chairman_sponsor=t.majority_caucus_chairman_sponsor,
+    a.majority_caucus_vice_chairman_author=t.majority_caucus_vice_chairman_author,
+    a.majority_caucus_vice_chairman_sponsor=t.majority_caucus_vice_chairman_sponsor,
+    a.majority_caucus_whip_author=t.majority_caucus_whip_author,
+    a.majority_caucus_whip_sponsor=t.majority_caucus_whip_sponsor,
+    a.majority_caucus_treas_sec_author=t.majority_caucus_treas_sec_author,
+    a.majority_caucus_treas_sec_sponsor=t.majority_caucus_treas_sec_sponsor
   WHERE a.id=t.id;
 
   /*add other chairman sponsorship information*/
@@ -813,7 +806,7 @@ UPDATE bills_attributes a, (
 SELECT b.id,
 LOWER(MAX(IF(committee_type='House' AND b.`document_type`='HB',NAME,IF(committee_type='Senate' AND b.`document_type`='SB',NAME,NULL)))) AS committee_1,
 LOWER(MAX(IF(committee_type='House' AND b.`document_type`='SB',NAME,IF(committee_type='Senate' AND b.`document_type`='HB',NAME,NULL)))) AS committee_2
-FROM refined_bills_committees bc
+FROM bills_committees bc
 JOIN bills b
 ON b.id=bc.`bill_id`
 WHERE document_type IN ('HB','SB')
@@ -1142,7 +1135,7 @@ ba.`session_id`,
 ba.`document_type`,
 ba.`number`,
 ld.`leg_day`,
-IF(ld.leg_day>30,1,0) AS past_cross_over,
+IF(ld.leg_day>29,1,0) AS past_cross_over,
 ld.`leg_days_remaining`,
 ld.`status_date`,
 -- ba.category,
@@ -1158,7 +1151,7 @@ IF(DATE(ba.date_pass2)<=ld.status_date,ba.leg_days_remaining_pass2-leg_days_rema
 	IF(DATE(ba.date_out_comm2)<=ld.status_date,leg_days_remaining_out_comm2-leg_days_remaining,
 	IF(DATE(ba.date_pass1)<=ld.status_date,leg_days_remaining_pass1-leg_days_remaining,
 	IF(DATE(ba.date_out_comm1)<=ld.status_date,leg_days_remaining_out_comm1-leg_days_remaining,
-	IF(DATE(ba.date_submitted)<=ld.status_date,leg_days_remaining_submitted-leg_days_remaining,IF(ba.leg_year_submitted=2005,39,40)-leg_days_remaining))))))
+	IF(DATE(ba.date_submitted)<=ld.status_date,leg_days_remaining_submitted-leg_days_remaining,40-leg_days_remaining))))))
 AS leg_days_since_last_status,	
 ba.`date_submitted`,
 ba.`date_out_comm1`,
@@ -1191,10 +1184,19 @@ ba.`leg_days_remaining_sent_gov`,
 ba.`passed_year_submitted`,
 IF(ba.passed=1 AND ba.`passed_year_submitted`=0,1,0) AS passed_second_year,
 ba.passed,
-IF(chamber_leader_author=1,7,IF(rules_chair_author=1,6,IF(floor_leader_author,5,IF(majority_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author)))))) AS author_category_chairs_fl,
-IF(chamber_leader_author=1,5,IF(rules_chair_author=1,4,IF(majority_leadership_author,3,IF(majority_chairman_author=1,2,majority_party_author)))) AS author_category_chairs,
-IF(chamber_leader_author=1,6,IF(rules_chair_author=1,5,IF(majority_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))) AS author_category_chairs_min_leader,
-IF(IF(chamber_leader_author=1,7,IF(rules_chair_author=1,6,IF(floor_leader_author,5,IF(majority_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))))>2,2,majority_party_author) AS author_leadership_majority_only,
+chamber_leader_author,
+rules_chair_author,
+floor_leader_author,
+majority_caucus_leadership_author,
+majority_caucus_leader_author,
+majority_caucus_whip_author,
+majority_caucus_chairman_author,
+majority_caucus_vice_chairman_author,
+majority_caucus_treas_sec_author,
+IF(chamber_leader_author=1,7,IF(rules_chair_author=1,6,IF(floor_leader_author,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author)))))) AS author_category_chairs_fl,
+IF(chamber_leader_author=1,5,IF(rules_chair_author=1,4,IF(majority_caucus_leadership_author,3,IF(majority_chairman_author=1,2,majority_party_author)))) AS author_category_chairs,
+IF(chamber_leader_author=1,6,IF(rules_chair_author=1,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))) AS author_category_chairs_min_leader,
+IF(IF(chamber_leader_author=1,7,IF(rules_chair_author=1,6,IF(floor_leader_author,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))))>2,2,majority_party_author) AS author_leadership_majority_only,
 IF(ba.leg_year_submitted IN ('2000','2002','2004','2006','2008','2010','2012','2014','2016','2018'),1,0) AS leg_election_year,   
 IF(summary_amend_act=1,1,IF(summary_amend_title=1,2,IF(summary_amend_chapter=1,3,IF(summary_amend_article=1,4,IF(summary_amend_code=1,5,0))))) AS summary_amend_cat_expanded,   
 IF(majority_sponsors>4,5,majority_sponsors) AS majority_sponsors_cut,   
@@ -1216,13 +1218,18 @@ local_label,
 IF(summary_amend_act=0 AND summary_amend_any=1,1,IF(summary_amend_act=1,2,0)) AS summary_amend_cat,   
 days_from_may_submitted,   
 summary_county_names,   
-summary_city_of,   
-IF(minority_leader_sponsor>0,1,0) AS minority_leader_sponsor,   
-IF(rules_chair_sponsor>0,1,0) AS rules_chair_sponsor,   
-IF(chamber_leader_sponsor>0,1,0) AS chamber_leader_sponsor,   
-IF(majority_leadership_sponsors>0,1,0) AS majority_leadership_sponsor,           
-IF(majority_chairman_sponsors>0,1,0) AS majority_chairman_sponsor,           
-IF(floor_leader_sponsors>1,1,0) AS floor_leader_sponsor,
+summary_city_of, 
+IF(rules_chair_sponsor>0,1,0) AS rules_chair_sponsor,
+IF(chamber_leader_sponsor>0,1,0) AS chamber_leader_sponsor,
+IF(majority_caucus_leader_sponsor>0,1,0) AS majority_caucus_leader_sponsor,
+IF(majority_caucus_whip_sponsor>0,1,0) AS majority_caucus_whip_sponsor,
+IF(majority_caucus_chairman_sponsor>0,1,0) AS majority_caucus_chairman_sponsor,
+IF(majority_caucus_vice_chairman_sponsor>0,1,0) AS majority_caucus_vice_chairman_sponsor,
+IF(majority_caucus_treas_sec_sponsor>0,1,0) AS majority_caucus_treas_sec_sponsor, 
+majority_caucus_leadership_sponsors,
+IF(majority_chairman_sponsors>1,1,0) majority_chairman_sponsor,
+IF(minority_leader_sponsor>0,1,0) AS minority_leader_sponsor,
+floor_leader_sponsors,
 committee_1,
 committee_2,
 IF(DATE(ba.date_out_comm1)<=ld.status_date,
@@ -1241,9 +1248,9 @@ IF(DATE(ba.date_out_comm1)<=ld.status_date AND comm_1_sub=1,1,0) AS comm_1_sub,
 IF(DATE(ba.date_out_comm2)<=ld.status_date AND comm_2_sub=1,1,0) AS comm_2_sub,
 IF(summary_city_of = 1 OR summary_county_names=1,1,0) AS local_inferred,
 IF(DATE(ba.date_amend)<=ld.status_date,yeas_amend_percent,0) AS yeas_amend_percent,
-IF(DATE(ba.date_amend)<=ld.status_date,yeas_amend_percent,0) AS nays_amend_percent,
+IF(DATE(ba.date_amend)<=ld.status_date,nays_amend_percent,0) AS nays_amend_percent,
 IF(DATE(ba.date_pass1)<=ld.status_date,yeas_pass1_percent,0) AS yeas_pass1_percent,
-IF(DATE(ba.date_pass1)<=ld.status_date,yeas_pass1_percent,0) AS nays_pass1_percent,
+IF(DATE(ba.date_pass1)<=ld.status_date,nays_pass1_percent,0) AS nays_pass1_percent,
 ba.leg_year_submitted
 FROM bills_attributes ba
 JOIN legislative_days_historical ld
