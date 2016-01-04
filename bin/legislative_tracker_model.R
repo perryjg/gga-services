@@ -15,7 +15,9 @@ con <-dbConnect(MySQL(), user = gga_user, password = gga_password, host = gga_ho
 debug(logger, "DB connection successful")
 
 data<-dbGetQuery(con,
-    "SELECT *,if((summary_city_of = 1 or summary_county_names=1),1,if(leg_day_status>2,1,0)) as crossed_over,
+    "SELECT *,if((local_inferred = 1),1,if(leg_day_status>2,1,0)) as crossed_over,
+    if(past_cross_over = 1 AND YEAR(status_date)<>leg_year_submitted,1,0) as past_cross_over_year_2,
+    if(leg_year_submitted = YEAR(status_date),1,0) AS submitted_same_session,
     if(leg_day_status=1,1,0) as submitted,
     if(leg_day_status=2,1,0) as out_comm1,
     if(leg_day_status=3,1,0) as pass1,
@@ -24,31 +26,39 @@ data<-dbGetQuery(con,
     CURDATE() as prediction_date
     FROM bills_attributes_historical
     WHERE leg_day_status NOT IN (0,6)
-    AND (`date_pass1` IS NOT NULL
-    OR local_label=1)
     AND session_id=24")
 
 testing <-data[data$status_date == max(data$status_date),]
 
+if(min(testing$leg_days_remaining) < 10 {
+	testing <-testing[ testing$crossed_over == 1,]
+}
 
+testing_regular<-testing[testing$submitted_same_session == 1,]
+testing_leftovers<-testing[testing$submitted_same_session == 0,]
 
 #GET TRAINING DATA SET OF ONLY LIVE BILLS
-#training <- data[data$session_id in c(14,18,20,21,23),]
+#training_leftovers<-training[training$submitted_same_session == 0,]
+#training_regular<-training[training$submitted_same_session == 1,]
 
-#training_cross<-training[training$crossed_over == 1,]
-#training_cross<-training_cross[training_cross$leg_days_remaining < 11,]
-#training_cross<-training_cross[training_cross$leg_days_remaining > 0,]
-
-#training_non_cross<-training[training$leg_days_remaining > 10,]
-
-#training_combined<-rbind(training_cross,training_non_cross)
-#training_combined<-training_combined[training_combined$leg_day_status != 6,]
-#training_combined<-training_combined[training_combined$leg_day_status != 0,]
-
-
+#training_cross_leftovers<-training_leftovers[training$crossed_over == 1,]
+#training_cross_leftovers<-training_cross_leftovers[training_cross_leftovers$past_cross_over_year_2 == 1,]
+#training_cross_leftovers<-training_cross_leftovers[training_cross_leftovers$leg_days_remaining > 0,]
+#
+#training_non_cross_leftovers<-training_leftovers[training_leftovers$past_cross_over_year_2 == 0,]
+#
+#training_combined_leftovers<-rbind(training_cross_leftovers,training_non_cross_leftovers)
+#
+#training_cross_regular<-training_regular[training$crossed_over == 1,]
+#training_cross_regular<-training_cross_regular[training_cross_regular$past_cross_over == 1,]
+#training_cross_regular<-training_cross_regular[training_cross_regular$leg_days_remaining > 0,]
+#
+#training_non_cross_regular<-training_regular[training_regular$past_cross_over == 0,]
+#
+#training_combined_regular<-rbind(training_cross_regular,training_non_cross_regular)
 
 #OUR MODEL SPECIFICATIONS
-#f<-lrm(
+#f_reg<-lrm(
 #passed_year_submitted ~
 #(rcs(leg_days_remaining_submitted,5) +
 #rcs(majority_sponsors_cut, 3) *
@@ -78,23 +88,66 @@ testing <-data[data$status_date == max(data$status_date),]
 #summary_social +
 #summary_health +
 #rcs(nays_pass1_percent,3),
-#data = training_combined, x = T, y = T)
+#data = training_combined_regular, x = T, y = T)
+
+#f_lo<-lrm(
+#passed_second_year ~
+#author_category_chairs_group_caucus_rules_chamber+
+#(some_movement_second_year+
+#rcs(majority_sponsors_cut, 3) *
+#rcs(minority_sponsors_cut, 3) +
+#summary_amend_cat +
+#document_type +
+#chamber_leader_sponsor +
+#submitted +
+#out_comm1 +
+#out_comm2 +
+#rcs(yeas_pass1_percent,3) +
+#yeas_amend_percent +
+#floor_leader_sponsors +
+#rcs(leg_days_since_last_status,3) +
+#rcs(leg_days_remaining,8)) *
+#local_inferred +
+#rules_chair_sponsor +
+#rcs(yeas_pass1_percent,3)*
+#(some_movement_second_year+
+#rcs(leg_days_since_last_status,3) +
+#rcs(leg_days_remaining,8))+
+#minority_leader_sponsor +
+#majority_caucus_leadership_sponsors +
+#majority_chairman_sponsor +
+#summary_tax +
+#summary_social +
+#summary_health +
+#rcs(nays_pass1_percent,3),
+#data = training_combined_leftovers, x = T, y = T)
 
 #Import saved model
-load(paste(getwd(),"/gga-services/bin/legislative_model.rda", sep=""))
+load(paste(getwd(),"/gga-services/bin/legislative_models.rda", sep=""))
 debug(logger, "Model loaded")
 
 #Write predictions to MySQL server
-id<-rownames(testing)
-results <- data.frame(id)
-results$bill_id<-testing$bill_id
-results$bill_passed<-testing$passed_year_submitted
-results$prediction_date<-testing$prediction_date
-results$legislative_day_date<-testing$status_date
-results$legislative_days_remaining<-testing$leg_days_remaining
-results$legislative_status<-testing$leg_day_status
-results$prediction<-predict(f,testing,type="fitted")
+id_reg<-rownames(testing_reg)
+results_reg <- data.frame(id)
+results_reg$bill_id<-testing_reg$bill_id
+results_reg$bill_passed<-testing_reg$passed_year_submitted
+results_reg$prediction_date<-testing_reg$prediction_date
+results_reg$legislative_day_date<-testing_reg$status_date
+results_reg$legislative_days_remaining<-testing_reg$leg_days_remaining
+results_reg$legislative_status<-testing_reg$leg_day_status
+results_reg$prediction<-predict(f_reg,testing_reg,type="fitted")
 
+id_lo<-rownames(testing_lo)
+results_lo <- data.frame(id)
+results_lo$bill_id<-testing_lo$bill_id
+results_lo$bill_passed<-testing_lo$passed_second_year
+results_lo$prediction_date<-testing_lo$prediction_date
+results_lo$legislative_day_date<-testing_lo$status_date
+results_lo$legislative_days_remaining<-testing_lo$leg_days_remaining
+results_lo$legislative_status<-testing_lo$leg_day_status
+results_lo$prediction<-predict(f_lo,testing_lo,type="fitted")
+
+results<-rbind(results_reg,results_lo)
 
 #fix prediction for budget at 1
 results[results$bill_id==42877,]$prediction<-1

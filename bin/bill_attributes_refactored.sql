@@ -1194,8 +1194,9 @@ majority_caucus_chairman_author,
 majority_caucus_vice_chairman_author,
 majority_caucus_treas_sec_author,
 IF(chamber_leader_author=1,7,IF(rules_chair_author=1,6,IF(floor_leader_author,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author)))))) AS author_category_chairs_fl,
-IF(chamber_leader_author=1,5,IF(rules_chair_author=1,4,IF(majority_caucus_leadership_author,3,IF(majority_chairman_author=1,2,majority_party_author)))) AS author_category_chairs,
-IF(chamber_leader_author=1,6,IF(rules_chair_author=1,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))) AS author_category_chairs_min_leader,
+IF(chamber_leader_author=1,5,IF(rules_chair_author=1,4,IF(majority_caucus_leadership_author=1,3,IF(majority_chairman_author=1,2,majority_party_author)))) AS author_category_chairs,
+IF(majority_caucus_leadership_author=1 OR rules_chair_author=1 OR chamber_leader_author=1,3,IF(majority_chairman_author=1,2,majority_party_author)) AS author_category_chairs_group_caucus_rules_chamber,
+IF(chamber_leader_author=1,6,IF(rules_chair_author=1,5,IF(majority_caucus_leadership_author=1,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))) AS author_category_chairs_min_leader,
 IF(IF(chamber_leader_author=1,7,IF(rules_chair_author=1,6,IF(floor_leader_author,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))))>2,2,majority_party_author) AS author_leadership_majority_only,
 IF(ba.leg_year_submitted IN ('2000','2002','2004','2006','2008','2010','2012','2014','2016','2018'),1,0) AS leg_election_year,   
 IF(summary_amend_act=1,1,IF(summary_amend_title=1,2,IF(summary_amend_chapter=1,3,IF(summary_amend_article=1,4,IF(summary_amend_code=1,5,0))))) AS summary_amend_cat_expanded,   
@@ -1258,6 +1259,149 @@ ON ba.`leg_year_submitted`=ld.`leg_year_submitted`
 WHERE ld.on_calendar <> 2
 AND author_party IS NOT NULL AND ba.session_id >= 14;
 
+/*2016 changes for leftover bills from previous session*/
+
+
+INSERT INTO bills_attributes_historical
+SELECT ba.id AS bill_id,    
+ba.`session_id`,
+ba.`document_type`,
+ba.`number`,
+ld.`leg_day`,
+IF(ld.leg_day>29,1,0) AS past_cross_over,
+ld.`leg_days_remaining`,
+ld.`status_date`,
+-- ba.category,
+IF(DATE(ba.date_pass2)<=ld.status_date,6,
+	IF(DATE(ba.date_amend)<=ld.status_date,5,
+	IF(DATE(ba.date_out_comm2)<=ld.status_date,4,
+	IF(DATE(ba.date_pass1)<=ld.status_date,3,
+	IF(DATE(ba.date_out_comm1)<=ld.status_date,2,
+	IF(DATE(ba.date_submitted)<=ld.status_date,1,0))))))
+AS leg_day_status,
+IF(DATE(ba.date_pass2)<=ld.status_date AND YEAR(ba.`date_pass2`) = ld.leg_year_submitted,ba.leg_days_remaining_pass2-leg_days_remaining,
+	IF(DATE(ba.date_amend)<=ld.status_date AND YEAR(ba.`date_amend`) = ld.leg_year_submitted,leg_days_remaining_amend-leg_days_remaining,
+	IF(DATE(ba.date_out_comm2)<=ld.status_date  AND YEAR(ba.`date_out_comm2`) = ld.leg_year_submitted,leg_days_remaining_out_comm2-leg_days_remaining,
+	IF(DATE(ba.date_pass1)<=ld.status_date AND YEAR(ba.`date_pass1`) = ld.leg_year_submitted,leg_days_remaining_pass1-leg_days_remaining,
+	IF(DATE(ba.date_out_comm1)<=ld.status_date AND YEAR(ba.`date_out_comm1`) = ld.leg_year_submitted,leg_days_remaining_out_comm1-leg_days_remaining,
+	IF(DATE(ba.date_submitted)<=ld.status_date AND YEAR(ba.`date_submitted`) = ld.leg_year_submitted,leg_days_remaining_submitted-leg_days_remaining,inactive_days_session_end+leg_day))))))
+AS leg_days_since_last_status,	
+ba.`date_submitted`,
+ba.`date_out_comm1`,
+ba.`date_pass1`,
+ba.`date_out_comm2`,
+ba.`date_amend`,
+ba.`date_pass2`,
+ba.`date_sent_gov`,
+ba.`leg_date_submitted`,
+ba.`leg_date_out_comm1`,
+ba.`leg_date_pass1`,
+ba.`leg_date_out_comm2`,
+ba.`leg_date_amend`,
+ba.`leg_date_pass2`,
+ba.`leg_date_sent_gov`,
+ba.`leg_day_submitted`,
+ba.`leg_day_out_comm1`,
+ba.`leg_day_pass1`,
+ba.`leg_day_out_comm2`,
+ba.`leg_day_amend`,
+ba.`leg_day_pass2`,
+ba.`leg_day_sent_gov`,
+ba.`leg_days_remaining_submitted`,
+ba.`leg_days_remaining_out_comm1`,
+ba.`leg_days_remaining_pass1`,
+ba.`leg_days_remaining_out_comm2`,
+ba.`leg_days_remaining_amend`,
+ba.`leg_days_remaining_pass2`,
+ba.`leg_days_remaining_sent_gov`,
+ba.`passed_year_submitted`,
+IF(ba.passed=1 AND ba.`passed_year_submitted`=0,1,0) AS passed_second_year,
+ba.passed,
+chamber_leader_author,
+rules_chair_author,
+floor_leader_author,
+majority_caucus_leadership_author,
+majority_caucus_leader_author,
+majority_caucus_whip_author,
+majority_caucus_chairman_author,
+majority_caucus_vice_chairman_author,
+majority_caucus_treas_sec_author,
+IF(chamber_leader_author=1,7,IF(rules_chair_author=1,6,IF(floor_leader_author,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author)))))) AS author_category_chairs_fl,
+IF(chamber_leader_author=1,5,IF(rules_chair_author=1,4,IF(majority_caucus_leadership_author,3,IF(majority_chairman_author=1,2,majority_party_author)))) AS author_category_chairs,
+IF(majority_caucus_leadership_author=1 OR rules_chair_author=1 OR chamber_leader_author=1,3,IF(majority_chairman_author=1,2,majority_party_author)) AS author_category_chairs_group_caucus_rules_chamber,
+IF(chamber_leader_author=1,6,IF(rules_chair_author=1,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))) AS author_category_chairs_min_leader,
+IF(IF(chamber_leader_author=1,7,IF(rules_chair_author=1,6,IF(floor_leader_author,5,IF(majority_caucus_leadership_author,4,IF(majority_chairman_author=1,3,IF(minority_leader_author=1,2,majority_party_author))))))>2,2,majority_party_author) AS author_leadership_majority_only,
+IF(ba.leg_year_submitted IN ('2000','2002','2004','2006','2008','2010','2012','2014','2016','2018'),1,0) AS leg_election_year,   
+IF(summary_amend_act=1,1,IF(summary_amend_title=1,2,IF(summary_amend_chapter=1,3,IF(summary_amend_article=1,4,IF(summary_amend_code=1,5,0))))) AS summary_amend_cat_expanded,   
+IF(majority_sponsors>4,5,majority_sponsors) AS majority_sponsors_cut,   
+IF(minority_sponsors>4,5,minority_sponsors) AS minority_sponsors_cut,   
+bi_partisan_sponsorship,   
+summary_homestead,   
+summary_amend_act,   
+summary_tax,   
+summary_to_authorize,   
+summary_new_charter,   
+summary_city,   
+summary_county,   
+summary_election, 
+summary_office,   
+summary_regulate,           
+summary_health,           
+summary_social,           
+local_label,           
+IF(summary_amend_act=0 AND summary_amend_any=1,1,IF(summary_amend_act=1,2,0)) AS summary_amend_cat,   
+days_from_may_submitted,   
+summary_county_names,   
+summary_city_of, 
+IF(rules_chair_sponsor>0,1,0) AS rules_chair_sponsor,
+IF(chamber_leader_sponsor>0,1,0) AS chamber_leader_sponsor,
+IF(majority_caucus_leader_sponsor>0,1,0) AS majority_caucus_leader_sponsor,
+IF(majority_caucus_whip_sponsor>0,1,0) AS majority_caucus_whip_sponsor,
+IF(majority_caucus_chairman_sponsor>0,1,0) AS majority_caucus_chairman_sponsor,
+IF(majority_caucus_vice_chairman_sponsor>0,1,0) AS majority_caucus_vice_chairman_sponsor,
+IF(majority_caucus_treas_sec_sponsor>0,1,0) AS majority_caucus_treas_sec_sponsor, 
+majority_caucus_leadership_sponsors,
+IF(majority_chairman_sponsors>1,1,0) majority_chairman_sponsor,
+IF(minority_leader_sponsor>0,1,0) AS minority_leader_sponsor,
+floor_leader_sponsors,
+committee_1,
+committee_2,
+IF(DATE(ba.date_out_comm1)<=ld.status_date,
+	IF(committee_1 IN ('reapportionment','agriculture','budget and fiscal affairs oversight','information and audits','regulated beverages','small business development',
+	'interstate cooperation','code revision','science and technology','children & youth','veterans') 
+	OR committee_1 LIKE '%special%','aggregated',IF(committee_1 IS NULL, "no_first_comm_reported",committee_1)),
+	"no_first_committee")
+AS committee_1_conv,
+IF(DATE(ba.date_out_comm2)<=ld.status_date,
+	IF(committee_2 IN ('reapportionment','agriculture','budget and fiscal affairs oversight','information and audits','regulated beverages','small business development',
+	'interstate cooperation','code revision','science and technology','children & youth','veterans') 
+	OR committee_2 LIKE '%special%','aggregated',IF(committee_2 IS NULL, "no_second_comm_reported",committee_2)),
+	"no_first_committee")
+AS committee_2_conv,
+IF(DATE(ba.date_out_comm1)<=ld.status_date AND comm_1_sub=1,1,0) AS comm_1_sub,
+IF(DATE(ba.date_out_comm2)<=ld.status_date AND comm_2_sub=1,1,0) AS comm_2_sub,
+IF(summary_city_of = 1 OR summary_county_names=1,1,0) AS local_inferred,
+IF(DATE(ba.date_amend)<=ld.status_date,yeas_amend_percent,0) AS yeas_amend_percent,
+IF(DATE(ba.date_amend)<=ld.status_date,nays_amend_percent,0) AS nays_amend_percent,
+IF(DATE(ba.date_pass1)<=ld.status_date,yeas_pass1_percent,0) AS yeas_pass1_percent,
+IF(DATE(ba.date_pass1)<=ld.status_date,nays_pass1_percent,0) AS nays_pass1_percent,
+ba.leg_year_submitted
+FROM bills_attributes ba
+JOIN legislative_days_historical ld
+ON ba.`leg_year_submitted`=ld.`leg_year_submitted`-1
+JOIN
+(SELECT bill_id,leg_days_since_last_status AS inactive_days_session_end
+FROM bills_attributes_historical bah
+WHERE bah.`passed_year_submitted`=0
+AND bah.`leg_election_year`=0
+AND ((bah.leg_days_remaining = 0 AND bah.`session_id` >14) OR (bah.`session_id`=14 AND bah.`leg_days_remaining`=1))) last_status_table
+ON ba.id = last_status_table.bill_id
+WHERE ld.on_calendar <> 2
+AND author_party IS NOT NULL AND ba.session_id >= 14
+AND ba.passed_year_submitted = 0
+AND ba.leg_election_year = 0;
+
+
 /*ADD MORE GRANULAR STATUSES*/
 ALTER TABLE bills_attributes_historical
 ADD COLUMN leg_day_status_granular VARCHAR(20),
@@ -1319,3 +1463,32 @@ WHERE a.`bill_id`=t.bill_id
 UPDATE bills_attributes_historical
 SET leg_days_since_last_status_granular=40-leg_days_remaining
 WHERE leg_day_status=0;
+
+/*Add granular movement indicator for second year*/
+ALTER TABLE bills_attributes_historical
+ADD COLUMN some_movement_second_year INT;
+
+UPDATE bills_attributes_historical a, (
+SELECT IF(ba.`leg_days_since_last_status_granular`<leg_day AND YEAR(status_date)<>leg_year_submitted,1,0) AS some_movement_second_year,bill_id,status_date
+FROM bills_attributes_historical ba
+WHERE ba.passed_year_submitted = 0
+AND ba.leg_election_year = 0
+AND ba.session_id >= 14) t
+
+SET a.some_movement_second_year = t.some_movement_second_year
+WHERE a.bill_id = t.bill_id
+AND a.status_date = t.status_date;
+
+
+ALTER TABLE bills_attributes_historical
+ADD COLUMN leg_days_remaining_2_year INT;
+
+UPDATE bills_attributes_historical a, (
+SELECT IF(YEAR(status_date)=leg_year_submitted,leg_days_remaining,leg_days_remaining+40) as leg_days_remaining_2_year,bill_id,status_date
+FROM bills_attributes_historical ba
+WHERE ba.session_id >= 14) t
+
+SET a.leg_days_remaining_2_year = t.leg_days_remaining_2_year
+WHERE a.bill_id = t.bill_id
+AND a.status_date = t.status_date;
+
