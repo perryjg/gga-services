@@ -2,7 +2,11 @@ require 'rubygems'
 require 'active_record'
 require 'active_support/core_ext'
 require 'mysql2'
+require 'logger'
 require_relative '../lib/gga_services'
+
+LOG = Logger.new("logs/members.log")
+LOG.level = Logger::INFO
 
 ActiveRecord::Base.establish_connection(
   adapter: "mysql2",
@@ -25,11 +29,12 @@ member_service = GGAServices::Member.new
 sessions = [24]
 
 sessions.each do |session|
-  puts ">>>>>>>>>SESSION: #{session}"
+  LOG.info(">>>>>>>>>SESSION: #{session}")
   members = member_service.get_members_by_session(session)
 
   members.each do |member|
-    puts ">>>>>>>>>MEMBER ID: #{member[:id]}"
+    # next unless member[:id] == '2878'
+    LOG.info(">>>>>>>>>MEMBER ID: #{member[:id]}")
     member_detail = member_service.get_member(member[:id])
 
     name = member_detail.delete(:name)
@@ -73,9 +78,10 @@ sessions.each do |session|
     member_detail.delete(:legislative_comments)
     member_detail.delete(:staff)
     member_detail.delete(:residence)
-    Member.find_or_create_by(id: member_detail[:id]).update(member_detail)
+    # p member_detail
+    m = Member.find_or_create_by(id: member_detail[:id])
+    m.update(member_detail)
 
     sleep(1)
-    # break
   end
 end
