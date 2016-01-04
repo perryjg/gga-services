@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>GGA Web Api Example 2 - POST with JSON</title>
+
+    <!--import the jQuery library-->
+    <script src="jquery-2.1.1.js" type="text/javascript"></script>
+
+    <!-- an inline style sheet to tell the browser how to display our page -->
+    <style type="text/css">
+        #gga-dynamic-content {  width:50%;   }        
+        ul { list-style-type:none; list-style-position:outside; padding:0; margin:0; }
+        li { display:block; list-style-type:none; margin-top:10px;  }
+        li a, .caption { color:#0000ff; }
+        .caption { padding-left:10px; }
+        .even { background-color:#d6f0cb; }
+    </style>
+
+    <!-- the code to look up information from GGA and display it on our page-->
+    <script type="text/javascript">
+
+        //this function is needed to convert a javascript Date into one that JSON parser will understand
+        function convertToJSONDate(strDate) {
+            var dt = new Date(strDate);
+            var newDate = new Date(Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds(), dt.getMilliseconds()));
+            return '/Date(' + newDate.getTime() + ')/';
+        }
+
+        //set a starting date
+        var dateStart = convertToJSONDate("1/13/2014");
+        //set an ending date
+        var dateEnd = convertToJSONDate("3/20/2014");
+
+        //create the JSON string for 2013-2014 Session with Status==SignedByGov between 1/13/2014 and 3/20/2014
+        var request = '{"Session":{"Id":23},"StatusConstraints":[{"__type":"ExistingStatusConstraint:http:\/\/www.legis.ga.gov\/2009\/01\/01\/data\/","DateEnd":"'
+                        + dateEnd + '","DateStart":"' + dateStart + '","Status":4}]}';
+
+        //below is the same request, but passing nulls for items we do not with to filter on
+        //see documentation for the base JSON request template and modify it as needed for your request.
+        request = '{"CommitteeAssigned":null,"DocumentTypes":null,"Keywords":null,"LegislationNumber":0,"LegislationTypes":null,"Session":{"Id":23},"Sponsors":null,"StatusConstraints":[{"__type":"ExistingStatusConstraint:http:\/\/www.legis.ga.gov\/2009\/01\/01\/data\/","DateEnd":"' +
+            dateEnd + '","DateStart":"' + dateStart + '","Status":4}],"Subjects":null}';    
+
+        $(document).ready(function () {// called when page is loaded
+            $.ajax({// make the asynchronous javascript call using jQuery's .ajax method.  We will specify a function that jQuery will use as a callback when the results come back
+                url: 'http://webservices.legis.ga.gov/GGAServices/Legislation/Service.svc/query/withPageSize/250/startingAtIndex/0/json',
+                type: 'POST',
+                dataType: 'json',
+                data: request,
+                error: function (xhr, status) {//an error occurred while making the call, alert the user.
+                    alert(status)
+                },
+                contentType: 'application/json; charset=utf-8',
+                success: function (legislation) {//this is the callback function we are passing to the asynchronous request.  When the data is returned, this function will be called.
+                    // the Json element has two properties, Page and Total.  Total is the number of results that satisfy the search conditions,
+                    // Page is the current page of results, and is represented as an Array of Legislation objects
+
+                    $('#results').html("");
+                    var even = false;
+
+                    // iterate the Page, output an li element for each piece of legislation
+                    $.each(legislation.Page, function () {//'this' is now a reference to the current Legislation object.
+                        var dt;
+                        switch (this.DocumentType) {// convert int to appropriate string
+                            case 1: dt = "SB";
+                                break;
+                            case 2: dt = "SR";
+                                break;
+                            case 3: dt = "HR";
+                                break;
+                            case 4: dt = "HB";
+                                break;
+
+                        }
+
+                        var cls = (even) ? "even" : "odd";
+                        $("#results").append("<li class='" + cls + "'><a target='_new' id='" + this.Id + "'></a></li>")
+
+                        var library = this.Session.Library; //the location of the Session's documents.  We will use the last segment of the url to target the correct Session on GGA
+                        var session = library.substring(library.lastIndexOf("n/") + 1); //will have leading and trailing slash, like so: /20112012/
+
+                        //so build the url to gga as site + {legislation display page} + session + docType + / + number: i.e.: http://www.legis.ga.gov/legislation/en-US/display/20112012/HB/1
+                        $("#" + this.Id).attr("href", "http://www.legis.ga.gov/legislation/en-US/display" + session + dt + "/" + this.Number);
+                        $('#' + this.Id).html(dt + ' ' + this.Number);
+                        $('#' + this.Id).after("<span class='caption'>" + this.Caption + "</span>");
+                        even = !even
+                    });
+                }                 
+            });
+        });        
+    </script>
+</head>
+
+<body>    
+    <div>
+    <h1>Georgia General Assembly Web Api Example 2 - JSON POST</h1>
+    <p>This HTML page shows an example of how to display content from the GGA web services on your website.  It uses jQuery and Json with Ajax (XmlHttpRequest).</p>
+    <p>More specifically, it demonstrates how to use the POST method for the Legislation Service's GetLegislationSearchResultsPaged method using JSON as the data exchange type.</p>
+    <p>We are submitting a query to the server that asks for bills that were signed by the Governor <em>during</em> the 2013-2014 Regular Session.</p>       
+    <!-- the div element below will be filled in dynamically using javascript, Ajax, jQuery, and Json-->
+    <div id="gga-dynamic-content">        
+        <ul id="results"><li><em>Loading...</em></li></ul>        
+    </div>
+
+    <p>The rest of the non-GGA page would continue below...</p>
+    </div>
+</body>
+</html>

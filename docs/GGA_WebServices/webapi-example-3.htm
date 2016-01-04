@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>GGA Web Api Example 3 - POST with XML</title>
+
+    <!--import the jQuery library-->
+    <script src="jquery-2.1.1.js" type="text/javascript"></script>
+
+    <!-- an inline style sheet to tell the browser how to display our page -->
+    <style type="text/css">
+        #gga-dynamic-content {  width:50%;   }        
+        ul { list-style-type:none; list-style-position:outside; padding:0; margin:0; }
+        li { display:block; list-style-type:none; margin-top:10px;  }
+        li a, .caption { color:#0000ff; }
+        .caption { padding-left:10px; }
+        .even { background-color:#d6f0cb; }
+    </style>        
+
+    <!-- the code to look up information from GGA and display it on our page-->
+    <script type="text/javascript">
+
+
+        //create the XML string for 2013-2014 Session with Status==SignedByGov and Legislaiton Type==Constitutional Amendment       
+        var request = '<LegislationSearchConstraints xmlns="http://www.legis.ga.gov/2009/01/01/data/" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">' +
+                        '<CommitteeAssigned i:nil="true" xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>' +
+                        '<DocumentTypes i:nil="true"/><Keywords i:nil="true"/>' +                                                       // default: null - match on any document type
+                        '<LegislationNumber>0</LegislationNumber>' +                                                                    // default: 0 - match on any legislation number
+                        '<LegislationTypes>' +
+                        '<LegislationType>CA</LegislationType>' +                                                                       // add filter for Const. Amendments
+                        '</LegislationTypes>' +
+                        '<Session><Id>23</Id></Session>' +                                                                              // add filter for Session
+                        '<Sponsors i:nil="true" xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>' +                // default: null - match on any sponsor
+                        '<StatusConstraints>' +
+                        '<StatusConstraint i:type="ExistingStatusConstraint"><Status>SignedByGovernor</Status></StatusConstraint>' +    // add filter for Signed by Governor
+                        '</StatusConstraints>' +
+                        '<Subjects i:nil="true" xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>' +                // default: null - match on any Title
+                        '</LegislationSearchConstraints>'
+
+        var url = 'http://webservices.legis.ga.gov/GGAServices/Legislation/Service.svc/query/withPageSize/250/startingAtIndex/0/xml';
+
+        $(document).ready(function () {// called when page is loaded
+            $.ajax({// make the asynchronous javascript call using jQuery's .ajax method.  We will specify a function that jQuery will use as a callback when the results come back
+                url: url,
+                type: 'POST',                                                           //be sure to specify POST as type, because default is GET
+                dataType: 'xml',
+                data: request,                                                          //this is the XML representation of the LegislationSearchConstraints object.
+                error: function (xhr, status) {//an error occurred while making the call, alert the user.
+                    alert(status)
+                },
+                contentType: 'application/xml; charset=utf-8',
+                success: function (legislation) {   //this is the callback function we are passing to the asynchronous request.  When the data is returned, this function will be called.
+
+                    $('#results').html("");                                             //clear any content currently in the results element
+                    var even = false;
+
+                    $(legislation).find('LegislationSearchResult').each(function () {   //iterate all elements named LegislationSearchResult in the XML document returned by the server
+                        //'this' is now a reference to the xml dom from the server's response.
+                        var id = $(this).children('Id').text();                         //get the unique identifier for this legislation     
+                        var dt = $(this).children('DocumentType').text();               //document type
+                        var number = $(this).children('Number').text();                 // bill number
+                        var caption = $(this).children('Caption').text();               // caption
+                        var library = $(this).find('Session').find('Library').text();   //the location of the Session's documents.  We will use the last segment of the url to target the correct Session on GGA
+                        var session = library.substring(library.lastIndexOf("n/") + 1); //will have leading and trailing slash, like so: /20112012/
+                        var cls = (even) ? "even" : "odd";                              // assign class for odd/even to allow shading on alternate rows
+
+                        //append a li element to the ul, then add an a element, specifying an id attribute so we can retrieve it in further steps
+                        $("#results").append("<li class='" + cls + "'><a target='_new' id='" + id + "'></a></li>");
+
+                        //now, build the url to gga as site + {legislation display page} + session + docType + / + number: i.e.: http://www.legis.ga.gov/legislation/en-US/display/20112012/HB/1
+                        $("#" + id).attr("href", "http://www.legis.ga.gov/legislation/en-US/display" + session + dt + "/" + number);
+                        $('#' + id).html(dt + ' ' + number);
+                        $('#' + id).after("<span class='caption'>" + caption + "</span>");
+
+                        even = !even                                                    //toggle odd/even
+
+                    });
+                }                
+            });
+        });                
+    </script>
+</head>
+
+<body>    
+    <div>
+    <h1>Georgia General Assembly Web Api Example 3 - XML POST</h1>
+    <p>This HTML page shows an example of how to display content from the GGA web services on your website.  It uses jQuery and XML with Ajax (XmlHttpRequest).</p>
+    <p>More specifically, it demonstrates how to use the POST method for the Legislation Service's GetLegislationSearchResultsPaged method using XML as the data exchange type.</p>
+    <p>We are submitting a query to the server that asks for <strong>Constitutional Amendments</strong> that were signed by the Governor for the 2013-2014 Regular Session.</p>       
+    <!-- the div element below will be filled in dynamically using javascript, Ajax, jQuery, and Json-->
+    <div id="gga-dynamic-content">        
+        <ul id="results"><li><em>Loading...</em></li></ul>        
+    </div>
+
+    <p>The rest of the non-GGA page would continue below...</p>
+    </div>
+</body>
+</html>

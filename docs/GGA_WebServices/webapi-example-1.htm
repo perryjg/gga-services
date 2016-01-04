@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>GGA Web Api Example 1</title>
+
+    <!--import the jQuery library-->
+    <script src="jquery-2.1.1.js" type="text/javascript"></script>
+
+    <!-- an inline style sheet to tell the browser how to display our page -->
+    <style type="text/css">
+        #gga-dynamic-content {  width:50%;   }        
+        ul { list-style-type:none; list-style-position:outside; padding:0; margin:0; }
+        li { display:block; list-style-type:none; margin-top:10px;  }
+        li a, .caption { color:#0000ff; }
+        .caption { padding-left:10px; }
+        .even { background-color:#d6f0cb; }
+    </style>
+
+    <!-- the code to look up information from GGA and display it on our page-->
+    <script type="text/javascript">
+        var keywords = '"Georgia Municipal Association"';       // the phrase we will search for, wrapped in double quotation marks
+
+        //
+        var url = 'http://webservices.legis.ga.gov/GGAServices/Legislation/Service.svc/query/withPageSize/250/startingAtIndex/0/json?keywords=' + keywords; 
+
+        $(document).ready(function () {// called when page is loaded
+
+            $.ajax({// make the asynchronous javascript call using jQuery's .ajax method.  We will specify a function that jQuery will use as a callback when the results come back
+                url: url,                     //the uri to connect to the web api interface of the Legislation Services GetLegislationSearchResultsPaged method
+                dataType: 'json',             //specify json as the data exchange method             
+                error: function (xhr, status) {//an error occurred while making the call, alert the user.
+                    alert(status)
+                },
+                contentType: 'application/json; charset=utf-8', //specify json as content-type                  
+                success: function (legislation) {//this is the callback function we are passing to the asynchronous request.  When the data is returned, this function will be called.
+                    // the Json element has two properties, Page and Total.  Total is the number of results that satisfy the search conditions,
+                    // Page is the current page of results, and is represented as an Array of Legislation objects
+
+                    $('#results').html("");     //clear the results element
+                    var even = false;           //start even at false
+
+                    // iterate the Page, output an li element for each piece of legislation
+                    $.each(legislation.Page, function () {//'this' is now a reference to the current Legislation object.
+                        var dt;
+                        switch (this.DocumentType) {// convert int to appropriate string
+                            case 1: dt = "SB";
+                                break;
+                            case 2: dt = "SR";
+                                break;
+                            case 3: dt = "HR";
+                                break;
+                            case 4: dt = "HB";
+                                break;
+
+                        }
+
+                        //append a LI element to the results element, use class even or odd as appropriate, and assign an id property that matches the Id property
+                        var cls = (even) ? "even" : "odd";
+                        $("#results").append("<li class='" + cls + "'><a target='_new' id='" + this.Id + "'></a></li>")
+
+                        var library = this.Session.Library; //the location of the Session's documents.  We will use the last segment of the url to target the correct Session on GGA
+                        var session = library.substring(library.lastIndexOf("n/") + 1); //will have leading and trailing slash, like so: /20112012/
+
+                        //so build the url to gga as site + {legislation display page} + session + docType + / + number: i.e.: http://www.legis.ga.gov/legislation/en-US/display/20112012/HB/1
+                        //we can get to the appropriate element by using the Id property because we used this property as the element's id property
+                        $("#" + this.Id).attr("href", "http://www.legis.ga.gov/legislation/en-US/display" + session + dt + "/" + this.Number);
+                        $('#' + this.Id).html(dt + ' ' + this.Number);
+                        $('#' + this.Id).after("<span class='caption'>" + this.Caption + "</span>");
+                        even = !even
+                    });
+                }                
+            });           
+        });                     
+    </script>
+</head>
+
+<body>    
+    <div>
+    <h1>Georgia General Assembly Web Api Example 1 - JSON GET</h1>
+    <p>This HTML page shows an example of how to display content from the GGA web services on your website.  It uses jQuery and Json with Ajax (XmlHttpRequest).</p>
+    <p>More specifically, it demonstrates how to use the GET method for the Legislation Service's GetLegislationSearchResultsPaged method using JSON as the data exchange type.</p>
+    <p>Below is a list of Legislation from the <em>current</em> Session that contain the phrase <strong>"Georgia Municipal Association"</strong> in at least one text version.</p>
+        
+    <!-- the div element below will be filled in dynamically using javascript, Ajax, jQuery, and Json-->
+    <div id="gga-dynamic-content">        
+        <ul id="results"><li><em>Loading...</em></li></ul>        
+    </div>
+
+    <p>The rest of the non-GGA page would continue below...</p>
+    </div>
+</body>
+</html>

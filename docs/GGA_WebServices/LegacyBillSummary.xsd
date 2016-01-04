@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="Bills">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element maxOccurs="unbounded" name="Bill">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Number" type="xs:string" />
+							<xs:element name="Short_Title" type="xs:string" />
+							<xs:element name="CompositeCaption" type="xs:string" />
+							<xs:element name="Title" type="xs:string" />
+							<xs:element name="HCommittee" />
+							<xs:element name="SCommittee" />
+							<xs:element name="EffDate" />
+							<xs:element name="BStatus" type="xs:string" />
+							<xs:element name="Footnote" />
+							<xs:element name="StatusHistory">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Status">
+											<xs:complexType>
+												<xs:simpleContent>
+													<xs:extension base="xs:string">
+														<xs:attribute name="StatusDate" type="xs:dateTime" use="required" />
+														<xs:attribute name="StatusCode" type="xs:string" use="required" />
+														<xs:attribute name="AmSubDesc" type="xs:string" use="optional" />
+													</xs:extension>
+												</xs:simpleContent>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Versions">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Version">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Description" type="xs:string" />
+													<xs:element name="FileID" type="xs:string" />
+												</xs:sequence>
+												<xs:attribute name="Number" type="xs:unsignedByte" use="required" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element maxOccurs="unbounded" name="Sponsor">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute name="Seq" type="xs:unsignedByte" use="required" />
+											<xs:attribute name="Type" type="xs:unsignedByte" use="required" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="Id" type="xs:unsignedShort" use="required" />
+						<xs:attribute name="Type" type="xs:string" use="required" />
+						<xs:attribute name="Num" type="xs:unsignedByte" use="required" />
+						<xs:attribute name="Suffix" type="xs:string" use="required" />
+						<xs:attribute name="Carryover" type="xs:unsignedByte" use="required" />
+						<xs:attribute name="YearID" type="xs:unsignedByte" use="required" />
+						<xs:attribute name="StatusDate" type="xs:string" use="required" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
