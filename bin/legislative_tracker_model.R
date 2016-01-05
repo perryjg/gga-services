@@ -26,16 +26,16 @@ data<-dbGetQuery(con,
     CURDATE() as prediction_date
     FROM bills_attributes_historical
     WHERE leg_day_status NOT IN (0,6)
-    AND session_id=24")
+    AND session_id=23")
 
 testing <-data[data$status_date == max(data$status_date),]
 
-if(min(testing$leg_days_remaining) < 10 {
+if(min(testing$leg_days_remaining) < 10) {
 	testing <-testing[ testing$crossed_over == 1,]
 }
 
-testing_regular<-testing[testing$submitted_same_session == 1,]
-testing_leftovers<-testing[testing$submitted_same_session == 0,]
+testing_reg<-testing[testing$submitted_same_session == 1,]
+testing_lo<-testing[testing$submitted_same_session == 0,]
 
 #GET TRAINING DATA SET OF ONLY LIVE BILLS
 #training_leftovers<-training[training$submitted_same_session == 0,]
@@ -127,7 +127,7 @@ load(paste(getwd(),"/gga-services/bin/legislative_models.rda", sep=""))
 debug(logger, "Model loaded")
 
 #Write predictions to MySQL server
-id_reg<-rownames(testing_reg)
+id<-rownames(testing_reg)
 results_reg <- data.frame(id)
 results_reg$bill_id<-testing_reg$bill_id
 results_reg$bill_passed<-testing_reg$passed_year_submitted
@@ -137,7 +137,7 @@ results_reg$legislative_days_remaining<-testing_reg$leg_days_remaining
 results_reg$legislative_status<-testing_reg$leg_day_status
 results_reg$prediction<-predict(f_reg,testing_reg,type="fitted")
 
-id_lo<-rownames(testing_lo)
+id<-rownames(testing_lo)
 results_lo <- data.frame(id)
 results_lo$bill_id<-testing_lo$bill_id
 results_lo$bill_passed<-testing_lo$passed_second_year
@@ -150,7 +150,7 @@ results_lo$prediction<-predict(f_lo,testing_lo,type="fitted")
 results<-rbind(results_reg,results_lo)
 
 #fix prediction for budget at 1
-results[results$bill_id==42877,]$prediction<-1
+#results[results$bill_id==42877,]$prediction<-1
 
 
 dbWriteTable(con,name = "predictions",value=results, overwrite = TRUE,field.types=list(id="INT", bill_id="INT",bill_passed="INT",prediction_date="date",legislative_day_date="date",legislative_days_remaining="INT",legislative_status="INT",prediction="double"), row.names=FALSE)
