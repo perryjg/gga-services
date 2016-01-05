@@ -26,7 +26,7 @@ data<-dbGetQuery(con,
     CURDATE() as prediction_date
     FROM bills_attributes_historical
     WHERE leg_day_status NOT IN (0,6)
-    AND session_id=23")
+    AND session_id=24")
 
 testing <-data[data$status_date == max(data$status_date),]
 
