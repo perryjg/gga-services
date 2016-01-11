@@ -46,7 +46,7 @@ items.each do |select|
 
   select.children.each do |option|
     next unless option["value"]
-    # next if option["value"].match(/2014/)
+    next if option["value"].match(/2015/)
     day = Hash.new
     day[:legislative_day_date] = option["value"]
 
