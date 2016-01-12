@@ -52,7 +52,7 @@ else
 end
 
 begin
-  ActiveRecord::Base.connection.execute('call gga.reload_votes')
+  ActiveRecord::Base.connection.execute('call gga.reload_votes()')
 rescue => error
   LOG.error error
 else
