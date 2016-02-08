@@ -45,7 +45,7 @@ bills.each do |bill|
     puts ">>>>>>>>>>> Sleeping 2 min <<<<<<<<<<<<<<"
     sleep 120
     begin
-      puts">>>>>>>>>>>>> Trying again <<<<<<<<<<<<<<<"
+      puts ">>>>>>>>>>>>> Trying again <<<<<<<<<<<<<<<"
       bill_detail = bill_service.get_legislation_detail(bill[0])
     rescue => error
       LOG.error error

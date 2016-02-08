@@ -6,7 +6,7 @@ require 'logger'
 require_relative '../lib/gga_services'
 
 LOG = Logger.new('logs/bills_log.txt', 'weekly')
-LOG.level = Logger::INFO
+LOG.level = Logger::DEBUG
 LOG.info('START')
 
 ActiveRecord::Base.establish_connection(
@@ -14,7 +14,7 @@ ActiveRecord::Base.establish_connection(
   host: ENV["GGA_HOST"],
   username: ENV["GGA_USER"],
   password: ENV["GGA_PASSWORD"],
-  database: ENV["GGA_DATABASE"]
+  database: "gga_staging"
 )
 
 class BillIndex < ActiveRecord::Base

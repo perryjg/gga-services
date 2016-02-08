@@ -82,7 +82,7 @@ versions.each do |version|
 
     begin
       v = version.save
-      LOG.debus("Version #{version.id} update result: #{v}")
+      LOG.debug("Version #{version.id} update result: #{v}")
     rescue => error
       LOG.error error
     end
