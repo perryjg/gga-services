@@ -47,8 +47,8 @@ bills = Bill.current
 bills.each do |bill|
   versions = bill.versions.order(:version).to_a
   if versions.length > 1
-    LOG.info( bill.id )
-    LOG.info( "version count: #{versions.length}" )
+    LOG.debug( bill.id )
+    LOG.debug( "version count: #{versions.length}" )
     LOG.debug( versions )
     (1..versions.length - 1).each do |i|
       if versions[i].nil?
@@ -76,3 +76,4 @@ bills.each do |bill|
     LOG.debug( "version count: #{versions.length}" )
   end
 end
+LOG.info('STOP')
