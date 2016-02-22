@@ -30,7 +30,7 @@ begin
     b.goto "http://calendar.legis.ga.gov/Calendar/?chamber=#{chamber}"
 
     # (1..11).each {|x| b.link(title: "Go to the previous month").click}
-    b.link(title: "Go to the previous month").click
+    # b.link(title: "Go to the previous month").click
     (1..4).each do |i|
       month = b.table(id: "Calendar1")
       LOG.info( month.rows[0].cells[2].text )
