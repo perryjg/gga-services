@@ -13,8 +13,8 @@ ActiveRecord::Base.establish_connection(
   database: ENV["GGA_DATABASE"]
 )
 
-LOG = Logger.new("logs/votes_log.txt", "weekly")
-LOG.level = Logger::INFO
+LOG = Logger.new("logs/votes.log", "weekly")
+LOG.level = Logger::DEBUG
 LOG.info("START")
 
 class Vote < ActiveRecord::Base
@@ -27,8 +27,7 @@ class MemberVote < ActiveRecord::Base
 end
 
 begin
-  # votes = Vote.where("vote_date >= '#{1.day.ago.to_date}'")
-  votes = Vote.where("vote_date >= '2015-01-01'")
+  votes = Vote.where("vote_date >= '#{1.day.ago.to_date}'")
 rescue => error
   LOG.fatal error
   fail
@@ -59,7 +58,7 @@ if votes.length > 0
       new_member_vote.save if new_member_vote.valid?
     end
   end
-
+  # Now done in reload_gga.rb
   # begin
   #   ActiveRecord::Base.connection.execute('call gga.reload_member_votes')
   # rescue => error

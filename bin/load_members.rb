@@ -25,8 +25,8 @@ class LegislativeService < ActiveRecord::Base
 end
 
 member_service = GGAServices::Member.new
-# sessions = [24,23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [24]
+# sessions = [25,24,23,22,21,20,18,15,14,13,11,7,6,1]
+sessions = [25]
 
 sessions.each do |session|
   LOG.info(">>>>>>>>>SESSION: #{session}")

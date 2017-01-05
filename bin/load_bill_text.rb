@@ -26,7 +26,7 @@ class Text < ActiveRecord::Base
   self.primary_key = "version_id"
 end
 
-versions = Version.all.order(id: :desc).where("url like '%20152016%'")
+versions = Version.all.order(id: :desc).where("url like '%20172018%'")
 LOG.info("#{versions.length} Records found")
 text_service = GGAServices::LegislationText.new
 

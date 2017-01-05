@@ -55,8 +55,8 @@ class BillsVote < ActiveRecord::Base
   validates :bill_id, uniqueness: { scope: :vote_id }
 end
 
-# sessions = [24,23,22,21,20,18,15,14,13,11,7,6,1]
-sessions = [24]
+#sessions = [25,24,23,22,21,20,18,15,14,13,11,7,6,1]
+sessions = [25]
 house = {
   "HB" => "house",
   "HR" => "house",

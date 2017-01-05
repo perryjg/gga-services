@@ -5,7 +5,7 @@ require 'levenshtein'
 require 'logger'
 
 LOG = Logger.new('logs/version_distance.log', 'weekly')
-LOG.level = Logger::INFO
+LOG.level = Logger::DEBUG
 LOG.info('START')
 
 
@@ -34,7 +34,7 @@ end
 
 class Bill < ActiveRecord::Base
   has_many :versions
-  scope :current, -> {where(session_id: 24)}
+  scope :current, -> {where(session_id: 25)}
 end
 
 class Version < ActiveRecord::Base
