@@ -1,13 +1,20 @@
+# Old version of the script -- DO NOT USE
+
 require 'rubygems'
 require 'dbi'
 require_relative '../lib/gga_services'
 
 include GGAServices
 
-connect_string = 'DBI:Mysql:gga_services:ajc-intranet.cgmwsizvte0i.us-east-1.rds.amazonaws.com'
+#connect_string = 'DBI:Mysql:gga_services:ajc-intranet.cgmwsizvte0i.us-east-1.rds.amazonaws.com'
+# @dbh = DBI.connect( connect_string,
+#                     "",
+#                     ""
+# )
+connect_string = 'DBI:Mysql:gga:localhost'
 @dbh = DBI.connect( connect_string,
-                    "ajcnews",
-                    "KbZ776Pd"
+                    "john",
+                    "schuster"
 )
 
 def load_member_committee(member_id, session_id, service_id, committee)
@@ -21,7 +28,7 @@ def load_member_committee(member_id, session_id, service_id, committee)
         service_id,
         committee[:roll],
         committee[:date_vacated]
-    ]m
+    ]
     begin
         @dbh.do(committee_sql)
     rescue DBI::DatabaseError => e
@@ -97,6 +104,7 @@ end
 # print "#{count} records inserted"
 
 # sessions = [1, 6, 7, 11, 13, 14, 15, 18, 20, 21, 22, 23]
+#sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
 sessions = [23,22,21,20,18,15,14,13,11,7,6,1]
 
 member_session_format = 'INSERT IGNORE INTO session_members
