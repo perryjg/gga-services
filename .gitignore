@@ -19,6 +19,7 @@ tmp
 _yardoc
 doc/
 logs/
+data/
 .RData
 *.Rout
 *.goutputstream*
